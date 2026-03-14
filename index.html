@@ -1,0 +1,3290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chaitanya Nagisetty | Memory & ASIC Verification Engineer</title>
+<style>
+/* ═══════════════════════════════════════════════════
+   GLOBAL RESET & VARIABLES
+═══════════════════════════════════════════════════ */
+:root {
+  --bg-deep:    #020408;
+  --bg-card:    #050d14;
+  --bg-glass:   rgba(0,200,255,0.04);
+  --cyan:       #00d4ff;
+  --cyan-dim:   #0096b8;
+  --green:      #00ff88;
+  --purple:     #9b59ff;
+  --orange:     #ff8c00;
+  --red:        #ff3860;
+  --text:       #c8e6f0;
+  --text-dim:   #5a8a9f;
+  --border:     rgba(0,212,255,0.15);
+  --glow:       0 0 20px rgba(0,212,255,0.3);
+  --glow-green: 0 0 20px rgba(0,255,136,0.3);
+  --ff:         'Courier New', monospace;
+  --fs:         'Segoe UI', system-ui, sans-serif;
+}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { scroll-behavior: smooth; }
+body {
+  background: var(--bg-deep);
+  color: var(--text);
+  font-family: var(--fs);
+  overflow-x: hidden;
+  line-height: 1.7;
+}
+::selection { background: var(--cyan); color: #000; }
+a { color: var(--cyan); text-decoration: none; }
+a:hover { color: var(--green); }
+
+/* ═══════════════════════════════════════════════════
+   ANIMATED CIRCUIT CANVAS BACKGROUND
+═══════════════════════════════════════════════════ */
+#circuit-canvas {
+  position: fixed; top: 0; left: 0;
+  width: 100%; height: 100%;
+  z-index: 0; pointer-events: none;
+  opacity: 0.35;
+}
+
+/* ═══════════════════════════════════════════════════
+   NAVBAR
+═══════════════════════════════════════════════════ */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 1000;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 3rem;
+  height: 64px;
+  background: rgba(2,4,8,0.85);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+}
+.nav-logo {
+  display: flex; align-items: center; gap: 12px;
+  font-family: var(--ff);
+}
+.logo-chip {
+  width: 36px; height: 36px;
+  position: relative;
+}
+.logo-chip svg { width: 36px; height: 36px; }
+.nav-brand-name {
+  font-size: 1.1rem; font-weight: 700;
+  color: var(--cyan);
+  letter-spacing: 2px;
+}
+.nav-brand-sub {
+  font-size: 0.65rem;
+  color: var(--text-dim);
+  letter-spacing: 3px;
+  display: block;
+  margin-top: -4px;
+}
+.nav-links {
+  display: flex; gap: 2rem; list-style: none;
+}
+.nav-links a {
+  font-size: 0.8rem; letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--text-dim);
+  transition: color 0.3s;
+  font-family: var(--ff);
+}
+.nav-links a:hover { color: var(--cyan); }
+.nav-cta {
+  padding: 8px 20px;
+  border: 1px solid var(--cyan);
+  border-radius: 4px;
+  font-size: 0.78rem;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--cyan) !important;
+  font-family: var(--ff);
+  transition: background 0.3s, box-shadow 0.3s;
+}
+.nav-cta:hover {
+  background: rgba(0,212,255,0.1);
+  box-shadow: var(--glow);
+}
+
+/* ═══════════════════════════════════════════════════
+   HERO SECTION
+═══════════════════════════════════════════════════ */
+#hero {
+  position: relative; z-index: 1;
+  min-height: 100vh;
+  display: flex; flex-direction: column;
+  justify-content: center; align-items: center;
+  text-align: center;
+  padding: 120px 2rem 60px;
+}
+.hero-eyebrow {
+  font-family: var(--ff);
+  font-size: 0.75rem; letter-spacing: 4px;
+  color: var(--cyan); text-transform: uppercase;
+  margin-bottom: 1.5rem;
+  animation: fadeInDown 1s ease both;
+}
+.hero-name {
+  font-size: clamp(2.8rem, 7vw, 5.5rem);
+  font-weight: 800; line-height: 1.05;
+  letter-spacing: -1px;
+  background: linear-gradient(135deg, #fff 30%, var(--cyan) 70%, var(--green) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: fadeInDown 1s ease 0.1s both;
+}
+.hero-title {
+  margin-top: 1rem;
+  font-size: clamp(1rem, 2.5vw, 1.4rem);
+  color: var(--text-dim);
+  font-family: var(--ff);
+  letter-spacing: 2px;
+  animation: fadeInDown 1s ease 0.2s both;
+}
+.hero-title span { color: var(--cyan); }
+
+/* Data Eye Logo Animation */
+.data-eye {
+  width: 220px; height: 100px;
+  margin: 2rem auto;
+  animation: fadeIn 1s ease 0.4s both;
+}
+.hero-badges {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  justify-content: center;
+  margin-top: 2rem;
+  animation: fadeInUp 1s ease 0.5s both;
+}
+.badge {
+  padding: 5px 14px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 0.75rem; letter-spacing: 1px;
+  font-family: var(--ff);
+  color: var(--text-dim);
+  background: var(--bg-glass);
+  transition: border-color 0.3s, color 0.3s;
+}
+.badge:hover { border-color: var(--cyan); color: var(--cyan); }
+.hero-cta-row {
+  display: flex; gap: 16px; justify-content: center;
+  margin-top: 2.5rem;
+  animation: fadeInUp 1s ease 0.6s both;
+}
+.btn-primary {
+  padding: 14px 32px;
+  background: linear-gradient(135deg, var(--cyan), var(--purple));
+  border-radius: 6px;
+  font-weight: 700; font-size: 0.9rem; letter-spacing: 1.5px;
+  color: #000; text-transform: uppercase;
+  transition: transform 0.2s, box-shadow 0.2s;
+  box-shadow: 0 4px 24px rgba(0,212,255,0.3);
+}
+.btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 32px rgba(0,212,255,0.5); color: #000; }
+.btn-outline {
+  padding: 14px 32px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.9rem; letter-spacing: 1.5px;
+  color: var(--text);
+  transition: border-color 0.3s, box-shadow 0.3s, transform 0.2s;
+}
+.btn-outline:hover { border-color: var(--green); color: var(--green); box-shadow: var(--glow-green); transform: translateY(-2px); }
+.hero-scroll {
+  position: absolute; bottom: 2rem; left: 50%; transform: translateX(-50%);
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  color: var(--text-dim); font-size: 0.7rem; letter-spacing: 2px;
+  font-family: var(--ff);
+  animation: bounce 2s infinite;
+}
+.hero-scroll::after {
+  content: ''; width: 1px; height: 40px;
+  background: linear-gradient(var(--cyan), transparent);
+}
+
+/* ═══════════════════════════════════════════════════
+   SECTION LAYOUT
+═══════════════════════════════════════════════════ */
+section { position: relative; z-index: 1; padding: 100px 0; }
+.container { max-width: 1200px; margin: 0 auto; padding: 0 2rem; }
+.section-header { text-align: center; margin-bottom: 60px; }
+.section-label {
+  font-family: var(--ff); font-size: 0.7rem;
+  letter-spacing: 4px; text-transform: uppercase;
+  color: var(--cyan); margin-bottom: 0.5rem;
+}
+.section-label::before { content: '// '; }
+.section-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 800;
+  background: linear-gradient(135deg, #fff, var(--cyan));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+.section-line {
+  width: 60px; height: 2px; margin: 1rem auto 0;
+  background: linear-gradient(var(--cyan), var(--purple));
+}
+
+/* ═══════════════════════════════════════════════════
+   BIO SECTION
+═══════════════════════════════════════════════════ */
+#bio { background: linear-gradient(180deg, transparent, rgba(0,212,255,0.02) 50%, transparent); }
+.bio-grid {
+  display: grid; grid-template-columns: 1fr 1.6fr; gap: 60px;
+  align-items: center;
+}
+.bio-stats {
+  display: flex; flex-direction: column; gap: 20px;
+}
+.stat-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px 24px;
+  transition: border-color 0.3s, transform 0.3s;
+}
+.stat-card:hover { border-color: var(--cyan); transform: translateX(6px); }
+.stat-num {
+  font-size: 2.5rem; font-weight: 800;
+  font-family: var(--ff);
+  color: var(--cyan);
+  line-height: 1;
+}
+.stat-num span { font-size: 1.5rem; }
+.stat-label { font-size: 0.8rem; color: var(--text-dim); letter-spacing: 1px; margin-top: 4px; }
+.bio-text p { margin-bottom: 1.2rem; color: var(--text); line-height: 1.85; font-size: 1rem; }
+.bio-text strong { color: var(--cyan); font-weight: 600; }
+.bio-text em { color: var(--green); font-style: normal; font-weight: 600; }
+.bio-highlights {
+  display: flex; flex-wrap: wrap; gap: 10px;
+  margin-top: 1.5rem;
+}
+.highlight-tag {
+  padding: 6px 14px;
+  background: rgba(0,212,255,0.08);
+  border: 1px solid rgba(0,212,255,0.2);
+  border-radius: 4px;
+  font-size: 0.78rem; font-family: var(--ff);
+  color: var(--cyan);
+}
+
+/* ═══════════════════════════════════════════════════
+   SKILLS SECTION
+═══════════════════════════════════════════════════ */
+#skills { background: rgba(0,0,0,0.3); }
+.skills-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 20px;
+}
+.skill-category {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+}
+.skill-category:hover {
+  border-color: var(--cyan);
+  transform: translateY(-4px);
+  box-shadow: 0 12px 40px rgba(0,212,255,0.12);
+}
+.skill-cat-icon { font-size: 1.8rem; margin-bottom: 10px; }
+.skill-cat-name {
+  font-size: 0.85rem; font-weight: 700;
+  color: var(--cyan); letter-spacing: 2px;
+  text-transform: uppercase; font-family: var(--ff);
+  margin-bottom: 14px;
+}
+.skill-tags { display: flex; flex-wrap: wrap; gap: 8px; }
+.skill-tag {
+  padding: 4px 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 4px;
+  font-size: 0.72rem; font-family: var(--ff);
+  color: var(--text-dim);
+  transition: all 0.2s;
+}
+.skill-tag:hover { border-color: var(--green); color: var(--green); }
+
+/* ═══════════════════════════════════════════════════
+   PROJECTS SECTION
+═══════════════════════════════════════════════════ */
+#projects { }
+.project-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  margin-bottom: 40px;
+  overflow: hidden;
+  transition: border-color 0.4s, box-shadow 0.4s;
+}
+.project-card:hover {
+  border-color: var(--cyan);
+  box-shadow: 0 0 60px rgba(0,212,255,0.08);
+}
+.project-card.featured { border-color: rgba(0,212,255,0.3); }
+.project-inner {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+}
+.project-inner.reverse { }
+.project-content { padding: 40px; }
+.project-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 0.68rem; letter-spacing: 2px;
+  text-transform: uppercase; font-family: var(--ff);
+  margin-bottom: 16px;
+}
+.badge-personal { background: rgba(0,255,136,0.1); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+.badge-professional { background: rgba(0,212,255,0.1); color: var(--cyan); border: 1px solid rgba(0,212,255,0.3); }
+.badge-course { background: rgba(155,89,255,0.1); color: var(--purple); border: 1px solid rgba(155,89,255,0.3); }
+.project-name {
+  font-size: 1.6rem; font-weight: 800; line-height: 1.2;
+  color: #fff; margin-bottom: 8px;
+}
+.project-subtitle {
+  font-size: 0.82rem; color: var(--cyan); font-family: var(--ff);
+  letter-spacing: 1.5px; margin-bottom: 16px;
+}
+.project-desc { color: var(--text-dim); font-size: 0.9rem; line-height: 1.8; margin-bottom: 20px; }
+.project-tech-stack {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-bottom: 24px;
+}
+.tech-chip {
+  padding: 3px 10px;
+  background: rgba(0,212,255,0.06);
+  border: 1px solid rgba(0,212,255,0.15);
+  border-radius: 3px;
+  font-size: 0.7rem; font-family: var(--ff); color: var(--cyan);
+}
+.project-links { display: flex; gap: 12px; flex-wrap: wrap; }
+.plink {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.75rem; font-family: var(--ff);
+  color: var(--text-dim);
+  transition: all 0.3s;
+}
+.plink:hover { border-color: var(--cyan); color: var(--cyan); background: rgba(0,212,255,0.06); }
+.plink svg { width: 14px; height: 14px; }
+
+/* ─── SVG Architecture Diagram Panel ─── */
+.project-diagram {
+  background: #020c14;
+  border-left: 1px solid var(--border);
+  padding: 30px;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 400px;
+}
+.project-diagram svg { max-width: 100%; height: auto; }
+
+/* ═══════════════════════════════════════════════════
+   EXPERIENCE TIMELINE
+═══════════════════════════════════════════════════ */
+#experience { background: rgba(0,0,0,0.3); }
+.timeline { position: relative; max-width: 800px; margin: 0 auto; }
+.timeline::before {
+  content: '';
+  position: absolute; left: 20px; top: 0; bottom: 0;
+  width: 1px; background: linear-gradient(var(--cyan), var(--purple), transparent);
+}
+.tl-item {
+  display: flex; gap: 30px;
+  margin-bottom: 40px;
+  padding-left: 10px;
+}
+.tl-dot {
+  flex-shrink: 0; width: 22px; height: 22px;
+  border-radius: 50%; margin-top: 4px;
+  border: 2px solid var(--cyan);
+  background: var(--bg-deep);
+  position: relative; z-index: 1;
+  box-shadow: 0 0 12px rgba(0,212,255,0.4);
+}
+.tl-dot.green { border-color: var(--green); box-shadow: 0 0 12px rgba(0,255,136,0.4); }
+.tl-dot.purple { border-color: var(--purple); box-shadow: 0 0 12px rgba(155,89,255,0.4); }
+.tl-body {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 24px;
+  flex: 1;
+  transition: border-color 0.3s;
+}
+.tl-body:hover { border-color: var(--cyan); }
+.tl-period { font-size: 0.7rem; font-family: var(--ff); color: var(--cyan); letter-spacing: 2px; margin-bottom: 6px; }
+.tl-role { font-size: 1.1rem; font-weight: 700; color: #fff; }
+.tl-company { font-size: 0.85rem; color: var(--text-dim); margin-bottom: 12px; }
+.tl-points { list-style: none; }
+.tl-points li {
+  padding: 4px 0; font-size: 0.85rem; color: var(--text-dim);
+  padding-left: 16px; position: relative;
+}
+.tl-points li::before {
+  content: '▶'; position: absolute; left: 0;
+  font-size: 0.5rem; color: var(--cyan); top: 8px;
+}
+.tl-tags { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.tl-tag {
+  padding: 3px 8px;
+  background: rgba(0,212,255,0.06);
+  border-radius: 3px;
+  font-size: 0.68rem; font-family: var(--ff); color: var(--text-dim);
+}
+
+/* ═══════════════════════════════════════════════════
+   RESOURCES / LINKS SECTION
+═══════════════════════════════════════════════════ */
+#resources { }
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
+}
+.resource-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 28px;
+  transition: all 0.3s;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.resource-card:hover {
+  border-color: var(--green);
+  transform: translateY(-4px);
+  box-shadow: var(--glow-green);
+}
+.resource-icon { font-size: 2rem; }
+.resource-name { font-size: 1rem; font-weight: 700; color: #fff; }
+.resource-desc { font-size: 0.82rem; color: var(--text-dim); line-height: 1.6; flex: 1; }
+.resource-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: 1px solid var(--green);
+  border-radius: 6px; color: var(--green); font-size: 0.75rem;
+  font-family: var(--ff); letter-spacing: 1px;
+  transition: background 0.3s;
+  width: fit-content;
+}
+.resource-link:hover { background: rgba(0,255,136,0.1); color: var(--green); }
+
+/* ═══════════════════════════════════════════════════
+   CONTACT SECTION
+═══════════════════════════════════════════════════ */
+#contact {
+  background: linear-gradient(180deg, transparent, rgba(0,212,255,0.03));
+  text-align: center;
+}
+.contact-cta {
+  max-width: 600px; margin: 0 auto;
+}
+.contact-cta p { color: var(--text-dim); margin-bottom: 2rem; }
+.contact-links {
+  display: flex; flex-wrap: wrap; gap: 16px; justify-content: center;
+  margin-top: 2rem;
+}
+.contact-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 12px 24px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 0.85rem; font-family: var(--ff);
+  color: var(--text-dim);
+  transition: all 0.3s;
+}
+.contact-chip:hover { border-color: var(--cyan); color: var(--cyan); box-shadow: var(--glow); }
+
+/* ═══════════════════════════════════════════════════
+   FOOTER
+═══════════════════════════════════════════════════ */
+footer {
+  position: relative; z-index: 1;
+  border-top: 1px solid var(--border);
+  padding: 40px 2rem;
+  text-align: center;
+  font-family: var(--ff); font-size: 0.72rem;
+  color: var(--text-dim); letter-spacing: 1px;
+}
+
+/* ═══════════════════════════════════════════════════
+   KEYFRAME ANIMATIONS
+═══════════════════════════════════════════════════ */
+@keyframes fadeInDown { from { opacity:0; transform: translateY(-20px); } to { opacity:1; transform: translateY(0); } }
+@keyframes fadeInUp   { from { opacity:0; transform: translateY(20px);  } to { opacity:1; transform: translateY(0); } }
+@keyframes fadeIn     { from { opacity:0; } to { opacity:1; } }
+@keyframes bounce     { 0%,100% { transform: translateX(-50%) translateY(0); } 50% { transform: translateX(-50%) translateY(-8px); } }
+@keyframes pulse-glow { 0%,100% { filter: drop-shadow(0 0 4px var(--cyan)); } 50% { filter: drop-shadow(0 0 12px var(--cyan)); } }
+@keyframes data-flow  { 0% { stroke-dashoffset: 200; opacity:0.2; } 50% { opacity:1; } 100% { stroke-dashoffset: 0; opacity:0.2; } }
+@keyframes blink-dot  { 0%,100% { opacity:1; } 50% { opacity:0.2; } }
+@keyframes rotate-ring { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+@keyframes scanline { 0% { top: -2px; } 100% { top: 100%; } }
+
+/* ═══════════════════════════════════════════════════
+   SCROLL REVEAL
+═══════════════════════════════════════════════════ */
+.reveal {
+  opacity: 0; transform: translateY(30px);
+  transition: opacity 0.7s ease, transform 0.7s ease;
+}
+.reveal.visible { opacity: 1; transform: translateY(0); }
+
+/* ═══════════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════════ */
+/* ═══════════════════════════════════════════════════
+   STATUS LIST
+═══════════════════════════════════════════════════ */
+.status-list { display: flex; flex-direction: column; gap: 8px; }
+.sl-item {
+  display: flex; align-items: flex-start; gap: 10px;
+  font-size: 0.82rem; color: var(--text-dim); line-height: 1.5;
+  padding: 6px 10px; border-radius: 6px;
+  border-left: 3px solid transparent;
+}
+.sl-item.done   { border-left-color: var(--green); background: rgba(0,255,136,0.04); }
+.sl-item.active { border-left-color: var(--cyan);  background: rgba(0,212,255,0.04); }
+.sl-item.pending{ border-left-color: #444;         background: rgba(255,255,255,0.02); }
+.sl-item.done::before   { content: '✅'; font-size:0.7rem; margin-top:1px; flex-shrink:0; }
+.sl-item.active::before { content: '🔄'; font-size:0.7rem; margin-top:1px; flex-shrink:0; }
+.sl-item.pending::before{ content: '⏳'; font-size:0.7rem; margin-top:1px; flex-shrink:0; }
+
+/* ═══════════════════════════════════════════════════
+   REPORT CARDS
+═══════════════════════════════════════════════════ */
+.report-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 12px; padding: 22px;
+  cursor: pointer;
+  transition: border-color 0.3s, transform 0.3s, box-shadow 0.3s;
+  display: flex; flex-direction: column; gap: 12px;
+}
+.report-card:hover {
+  border-color: var(--cyan); transform: translateY(-3px);
+  box-shadow: 0 8px 32px rgba(0,212,255,0.1);
+}
+.rcard-header { display: flex; align-items: center; gap: 12px; }
+.rcard-title { font-size: 1rem; font-weight: 700; color: #fff; }
+.rcard-tool  { font-size: 0.7rem; color: var(--text-dim); font-family: var(--ff); margin-top: 2px; }
+.rcard-verdict {
+  margin-left: auto; padding: 4px 10px; border-radius: 20px;
+  font-size: 0.65rem; font-weight: 700; letter-spacing: 2px;
+  font-family: var(--ff); text-transform: uppercase; flex-shrink: 0;
+}
+.rcard-verdict.pass { background: rgba(0,255,136,0.12); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+.rcard-verdict.warn { background: rgba(255,140,0,0.12);  color: var(--orange); border: 1px solid rgba(255,140,0,0.3); }
+.rcard-verdict.info { background: rgba(0,212,255,0.12); color: var(--cyan);  border: 1px solid rgba(0,212,255,0.3); }
+.rcard-stats { display: flex; gap: 16px; flex-wrap: wrap; }
+.rs { display: flex; flex-direction: column; gap: 2px; }
+.rs-num { font-family: var(--ff); font-size: 1.3rem; font-weight: 800; line-height: 1; }
+.rs-num.cyan   { color: var(--cyan); }
+.rs-num.green  { color: var(--green); }
+.rs-num.purple { color: var(--purple); }
+.rs-num.orange { color: var(--orange); }
+.rs-label { font-size: 0.62rem; color: var(--text-dim); letter-spacing: 1px; text-transform: uppercase; }
+.rcard-note { font-size: 0.72rem; color: var(--text-dim); font-family: var(--ff); line-height: 1.5; }
+.rcard-terminal {
+  background: #010810; border: 1px solid rgba(0,212,255,0.12);
+  border-radius: 6px; padding: 12px; margin-top: 4px;
+  font-family: var(--ff); font-size: 0.72rem; line-height: 1.8;
+}
+.term-line       { color: var(--text-dim); }
+.term-line.cyan  { color: var(--cyan); }
+.term-line.green { color: var(--green); }
+.term-line.orange{ color: var(--orange); }
+.term-line.dim   { color: #3a5a6a; }
+.rcard-expand { font-size: 0.7rem; color: var(--cyan); font-family: var(--ff); letter-spacing: 1px; }
+.rcard-dl {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 14px; border: 1px solid var(--border);
+  border-radius: 6px; font-size: 0.72rem; font-family: var(--ff);
+  color: var(--text-dim); width: fit-content;
+  transition: all 0.3s;
+}
+.rcard-dl:hover { border-color: var(--green); color: var(--green); }
+
+/* ═══════════════════════════════════════════════════
+   ROADMAP STEPS
+═══════════════════════════════════════════════════ */
+.roadmap-steps { display: flex; flex-direction: column; gap: 0; position: relative; padding-left: 28px; }
+.roadmap-steps::before {
+  content: ''; position: absolute; left: 8px; top: 8px; bottom: 8px;
+  width: 2px; background: linear-gradient(var(--green), var(--cyan), var(--purple), #333, #333);
+}
+.rs-step { display: flex; gap: 14px; margin-bottom: 20px; position: relative; }
+.rs-dot {
+  position: absolute; left: -24px; top: 4px;
+  width: 16px; height: 16px; border-radius: 50%;
+  border: 2px solid #333; background: var(--bg-deep);
+  z-index: 1;
+}
+.done-dot    { border-color: var(--green); box-shadow: 0 0 8px rgba(0,255,136,0.5); }
+.active-dot  { border-color: var(--cyan);  box-shadow: 0 0 8px rgba(0,212,255,0.5); animation: blink-dot 1.5s infinite; }
+.pending-dot { border-color: #333; }
+.rs-body { flex: 1; }
+.rs-title { font-size: 0.85rem; font-weight: 700; color: #fff; margin-bottom: 4px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.rs-desc  { font-size: 0.78rem; color: var(--text-dim); line-height: 1.7; }
+.rs-status-chip {
+  padding: 2px 8px; border-radius: 10px;
+  font-size: 0.62rem; font-family: var(--ff); letter-spacing: 1.5px; font-weight: 600;
+}
+.done-chip    { background: rgba(0,255,136,0.12); color: var(--green); border: 1px solid rgba(0,255,136,0.3); }
+.active-chip  { background: rgba(0,212,255,0.12); color: var(--cyan);  border: 1px solid rgba(0,212,255,0.3); }
+.pending-chip { background: rgba(255,255,255,0.04); color: #555; border: 1px solid #333; }
+
+@media (max-width: 900px) {
+  .bio-grid { grid-template-columns: 1fr; }
+  .project-inner { grid-template-columns: 1fr; }
+  .project-diagram { border-left: none; border-top: 1px solid var(--border); min-height: 280px; }
+  nav { padding: 0 1.5rem; }
+  .nav-links { display: none; }
+}
+
+/* ═══════════════════════════════════════════════════
+   PRELOADER
+═══════════════════════════════════════════════════ */
+#preloader {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 9999;
+  background: #000;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  gap: 20px;
+  transition: opacity 0.9s ease, visibility 0.9s ease;
+}
+#preloader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+.pl-logo {
+  font-family: var(--ff);
+  font-size: 1.5rem; letter-spacing: 10px;
+  color: var(--cyan); font-weight: 700;
+  text-shadow: 0 0 30px rgba(0,212,255,0.5);
+}
+.pl-sub { font-family: var(--ff); font-size: 0.6rem; letter-spacing: 5px; color: var(--text-dim); text-transform: uppercase; }
+.pl-bar { width: 280px; height: 1px; background: rgba(0,212,255,0.12); border-radius: 1px; overflow: hidden; margin: 8px 0; }
+.pl-bar-fill { height: 100%; background: linear-gradient(90deg, var(--cyan), var(--green), var(--purple)); animation: pl-load 2.2s cubic-bezier(.4,0,.2,1) forwards; width: 0%; }
+@keyframes pl-load { to { width: 100%; } }
+.pl-lines { font-family: var(--ff); font-size: 0.65rem; color: #2a4a5a; letter-spacing: 1.5px; text-align: left; line-height: 2; min-width: 280px; }
+.pl-line { opacity: 0; animation: pl-line-in 0.4s ease forwards; }
+.pl-line:nth-child(1){animation-delay:.3s} .pl-line:nth-child(2){animation-delay:.7s}
+.pl-line:nth-child(3){animation-delay:1.1s} .pl-line:nth-child(4){animation-delay:1.5s}
+.pl-line:nth-child(5){animation-delay:1.9s}
+@keyframes pl-line-in { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:none} }
+.pl-line.c { color: var(--cyan); } .pl-line.g { color: var(--green); }
+
+/* ═══════════════════════════════════════════════════
+   CINEMATIC OVERLAYS
+═══════════════════════════════════════════════════ */
+.film-grain {
+  position: fixed; top:-50%; left:-50%; right:-50%; bottom:-50%;
+  z-index: 2; pointer-events: none; opacity: 0.018;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 512 512' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 220px 220px;
+  animation: grain 0.07s steps(1) infinite;
+}
+@keyframes grain {
+  0%{transform:translate(0,0)} 10%{transform:translate(-3%,-5%)} 20%{transform:translate(-7%,3%)}
+  30%{transform:translate(4%,-12%)} 40%{transform:translate(-3%,13%)} 50%{transform:translate(-8%,5%)}
+  60%{transform:translate(8%,0%)} 70%{transform:translate(0%,8%)} 80%{transform:translate(1%,18%)}
+  90%{transform:translate(-5%,5%)} 100%{transform:translate(0,0)}
+}
+.scanlines {
+  position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+  z-index: 2; pointer-events: none;
+  background: repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.025) 2px, rgba(0,0,0,0.025) 4px);
+}
+
+/* ═══════════════════════════════════════════════════
+   SILICON JOURNEY
+═══════════════════════════════════════════════════ */
+#silicon { padding: 100px 0 60px; background: linear-gradient(180deg, rgba(5,2,15,0.95) 0%, rgba(0,5,15,0.9) 100%); overflow: hidden; }
+.silicon-track-wrap { position: relative; }
+.silicon-track-wrap::before,
+.silicon-track-wrap::after {
+  content: ''; position: absolute; top: 0; bottom: 0; width: 120px; z-index: 10; pointer-events: none;
+}
+.silicon-track-wrap::before { left: 0; background: linear-gradient(90deg, #000a0f, transparent); }
+.silicon-track-wrap::after  { right: 0; background: linear-gradient(-90deg, #000a0f, transparent); }
+.silicon-track {
+  display: flex; overflow-x: auto; scroll-snap-type: x mandatory; gap: 0;
+  padding: 20px 80px 50px; -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin; scrollbar-color: rgba(0,212,255,0.3) rgba(0,212,255,0.04);
+  cursor: grab;
+}
+.silicon-track:active { cursor: grabbing; }
+.silicon-track::-webkit-scrollbar { height: 2px; }
+.silicon-track::-webkit-scrollbar-track { background: rgba(0,212,255,0.04); }
+.silicon-track::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3); }
+.silicon-stage {
+  scroll-snap-align: center; flex: 0 0 300px; padding: 0 16px;
+  display: flex; flex-direction: column; align-items: center;
+  position: relative; opacity: 0.35; transition: opacity 0.5s, transform 0.5s;
+}
+.silicon-stage.si-active { opacity: 1; transform: scale(1.04); }
+.silicon-stage:not(:last-child)::after {
+  content: ''; position: absolute; right: -4px; top: 100px;
+  width: 32px; height: 1px; background: linear-gradient(90deg, rgba(0,212,255,0.4), transparent);
+}
+.si-num { font-family: var(--ff); font-size: 0.6rem; letter-spacing: 4px; color: var(--cyan); margin-bottom: 12px; text-transform: uppercase; }
+.si-svg-box {
+  width: 230px; height: 190px; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(135deg, rgba(0,5,18,0.9), rgba(0,15,30,0.8));
+  border: 1px solid rgba(0,212,255,0.08); border-radius: 14px;
+  transition: border-color 0.4s, box-shadow 0.4s; overflow: hidden; position: relative;
+}
+.silicon-stage.si-active .si-svg-box { border-color: rgba(0,212,255,0.35); box-shadow: 0 0 50px rgba(0,212,255,0.12); }
+.si-title { font-size: 1rem; font-weight: 800; color: #fff; margin-top: 18px; letter-spacing: 0.5px; text-align: center; }
+.si-desc  { font-size: 0.74rem; color: var(--text-dim); text-align: center; line-height: 1.7; margin-top: 6px; max-width: 250px; }
+.si-spec  { font-family: var(--ff); font-size: 0.64rem; color: var(--cyan); margin-top: 8px; letter-spacing: 1px; text-align: center; }
+.si-dots  { display: flex; gap: 8px; justify-content: center; margin-top: 28px; }
+.si-dot   { width: 7px; height: 7px; border-radius: 50%; background: rgba(0,212,255,0.15); cursor: pointer; transition: all 0.3s; border: 1px solid rgba(0,212,255,0.2); }
+.si-dot.active { background: var(--cyan); box-shadow: 0 0 8px var(--cyan); transform: scale(1.3); }
+
+/* ═══════════════════════════════════════════════════
+   WAVEFORM ANALYZER
+═══════════════════════════════════════════════════ */
+#waveforms { background: #00060f; border-top: 1px solid rgba(0,212,255,0.07); border-bottom: 1px solid rgba(0,212,255,0.07); }
+.wave-toolbar { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 20px; }
+.wave-btn {
+  padding: 7px 16px; border: 1px solid rgba(0,212,255,0.2); border-radius: 4px;
+  background: rgba(0,212,255,0.04); color: var(--text-dim); font-family: var(--ff);
+  font-size: 0.7rem; letter-spacing: 1.5px; text-transform: uppercase; cursor: pointer; transition: all 0.25s;
+}
+.wave-btn:hover, .wave-btn.wactive { border-color: var(--cyan); color: var(--cyan); background: rgba(0,212,255,0.09); }
+.wave-sep { width: 1px; height: 24px; background: rgba(0,212,255,0.12); margin: 0 4px; }
+.wave-mode-tag { font-family: var(--ff); font-size: 0.65rem; color: var(--text-dim); letter-spacing: 2px; margin-left: auto; }
+.wave-mode-tag span { color: var(--green); }
+.wave-outer {
+  background: #000b18; border: 1px solid rgba(0,212,255,0.12); border-radius: 10px;
+  overflow: hidden; position: relative;
+}
+.wave-outer::before {
+  content: 'OSCILLOSCOPE'; position: absolute; top: 8px; right: 14px;
+  font-family: var(--ff); font-size: 0.55rem; letter-spacing: 3px; color: rgba(0,212,255,0.2);
+}
+#waveCanvas { display: block; width: 100%; }
+.wave-legend { display: flex; flex-wrap: wrap; gap: 14px; margin-top: 14px; }
+.wl-item { display: flex; align-items: center; gap: 7px; font-size: 0.68rem; font-family: var(--ff); color: var(--text-dim); }
+.wl-swatch { width: 18px; height: 2px; border-radius: 1px; }
+
+/* ═══════════════════════════════════════════════════
+   AI / LLM VERIFICATION LAB
+═══════════════════════════════════════════════════ */
+#ailab { background: linear-gradient(180deg, rgba(3,0,12,0.9) 0%, rgba(0,4,18,0.95) 100%); }
+.ai-badge {
+  display: inline-flex; align-items: center; gap: 10px; padding: 6px 18px;
+  background: linear-gradient(135deg, rgba(155,89,255,0.1), rgba(0,212,255,0.08));
+  border: 1px solid rgba(155,89,255,0.25); border-radius: 20px;
+  font-family: var(--ff); font-size: 0.67rem; letter-spacing: 2px; color: var(--purple);
+  margin-bottom: 2.5rem;
+}
+.ai-pulse { width: 7px; height: 7px; border-radius: 50%; background: var(--purple); box-shadow: 0 0 8px var(--purple); animation: blink-dot 1.4s infinite; }
+.ai-tabs { display: flex; gap: 3px; flex-wrap: wrap; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0; margin-bottom: 0; }
+.ai-tab {
+  padding: 9px 18px; border: 1px solid transparent; border-bottom: none; border-radius: 5px 5px 0 0;
+  background: transparent; color: #556; font-family: var(--ff); font-size: 0.7rem;
+  letter-spacing: 1px; cursor: pointer; transition: all 0.2s;
+}
+.ai-tab:hover { color: #aaa; }
+.ai-tab.ai-active { background: rgba(0,212,255,0.05); border-color: rgba(0,212,255,0.15); color: var(--cyan); }
+.ai-body {
+  display: grid; grid-template-columns: 1fr 1.2fr; min-height: 480px;
+  border: 1px solid rgba(0,212,255,0.1); border-top: none; border-radius: 0 10px 10px 10px; overflow: hidden;
+}
+.ai-left { background: #010a14; border-right: 1px solid rgba(0,212,255,0.08); padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.ai-panel-lbl { font-family: var(--ff); font-size: 0.6rem; letter-spacing: 3px; color: #334; text-transform: uppercase; }
+.ai-prompt {
+  background: rgba(0,0,0,0.6); border: 1px solid rgba(0,212,255,0.1); border-radius: 6px;
+  padding: 14px; font-family: var(--ff); font-size: 0.75rem; color: #aac; line-height: 1.8; flex: 1; min-height: 140px;
+}
+.ai-prompt .role { font-size: 0.58rem; color: var(--purple); letter-spacing: 2.5px; display: block; margin-bottom: 8px; }
+.ai-run-btn {
+  padding: 11px 20px; background: linear-gradient(135deg, rgba(155,89,255,0.15), rgba(0,212,255,0.08));
+  border: 1px solid rgba(155,89,255,0.35); border-radius: 5px; color: var(--purple);
+  font-family: var(--ff); font-size: 0.7rem; letter-spacing: 2px; cursor: pointer; transition: all 0.3s;
+  text-transform: uppercase; display: flex; align-items: center; gap: 8px; justify-content: center;
+}
+.ai-run-btn:hover { box-shadow: 0 0 20px rgba(155,89,255,0.25); background: linear-gradient(135deg, rgba(155,89,255,0.28), rgba(0,212,255,0.12)); }
+.ai-think { display: none; align-items: center; gap: 8px; font-family: var(--ff); font-size: 0.67rem; color: var(--purple); }
+.ai-think.show { display: flex; }
+.tdots span { display: inline-block; width: 4px; height: 4px; border-radius: 50%; background: var(--purple); animation: tdot 0.9s infinite; margin: 0 1px; }
+.tdots span:nth-child(2){animation-delay:.15s} .tdots span:nth-child(3){animation-delay:.3s}
+@keyframes tdot { 0%,100%{transform:translateY(0);opacity:.3} 50%{transform:translateY(-5px);opacity:1} }
+.ai-right { background: #00070f; padding: 24px; display: flex; flex-direction: column; gap: 14px; }
+.ai-output {
+  background: rgba(0,0,0,0.7); border: 1px solid rgba(0,255,136,0.08); border-radius: 6px;
+  padding: 14px; font-family: var(--ff); font-size: 0.71rem; color: #7a9; line-height: 1.85;
+  flex: 1; overflow-y: auto; min-height: 280px; white-space: pre-wrap;
+}
+.tok-kw { color: var(--cyan); } .tok-str { color: var(--green); }
+.tok-cmt { color: #2a4a5a; } .tok-ty { color: var(--purple); } .tok-num { color: var(--orange); }
+.ai-cursor-blink { display: inline-block; width: 2px; height: 13px; background: var(--green); animation: blink-cursor 0.75s step-end infinite; vertical-align: middle; margin-left: 1px; }
+@keyframes blink-cursor { 0%,100%{opacity:1} 50%{opacity:0} }
+.ai-kpis { display: flex; gap: 18px; flex-wrap: wrap; }
+.ai-kpi { display: flex; flex-direction: column; gap: 2px; }
+.ai-kpi-n { font-family: var(--ff); font-size: 0.95rem; font-weight: 800; color: var(--green); }
+.ai-kpi-l { font-size: 0.59rem; color: #334; letter-spacing: 1px; text-transform: uppercase; }
+@media(max-width:840px){
+  .ai-body { grid-template-columns: 1fr; }
+  .silicon-stage { flex: 0 0 260px; }
+}
+</style>
+</head>
+<body>
+
+<!-- ════════════════════ PRELOADER ════════════════════ -->
+<div id="preloader">
+  <div class="pl-logo">DATASTROBE</div>
+  <div class="pl-sub">Silicon · Verification · Research</div>
+  <div class="pl-bar"><div class="pl-bar-fill"></div></div>
+  <div class="pl-lines">
+    <div class="pl-line">› Initializing ASIC verification environment...</div>
+    <div class="pl-line c">› Loading DDR3 controller RTL [99/99 files]...</div>
+    <div class="pl-line">› Compiling UVM testbench packages...</div>
+    <div class="pl-line g">› CDC closure verified [0 residual violations]</div>
+    <div class="pl-line c">› TAPEOUT-READY ✓ — Entering DATASTROBE</div>
+  </div>
+</div>
+
+<!-- ════════════════════ CINEMATIC OVERLAYS ════════════════════ -->
+<div class="film-grain" aria-hidden="true"></div>
+<div class="scanlines" aria-hidden="true"></div>
+
+<!-- ════════════════════ CIRCUIT CANVAS ════════════════════ -->
+<canvas id="circuit-canvas"></canvas>
+
+<!-- ════════════════════ NAVBAR ════════════════════ -->
+<nav>
+  <div class="nav-logo">
+    <div class="logo-chip">
+      <svg viewBox="0 0 36 36" fill="none">
+        <!-- Chip body -->
+        <rect x="9" y="9" width="18" height="18" rx="2" stroke="#00d4ff" stroke-width="1.5"/>
+        <!-- Core -->
+        <rect x="13" y="13" width="10" height="10" rx="1" fill="rgba(0,212,255,0.15)" stroke="#00d4ff" stroke-width="1"/>
+        <!-- Pins left -->
+        <line x1="9" y1="14" x2="4" y2="14" stroke="#00d4ff" stroke-width="1.2"/>
+        <line x1="9" y1="18" x2="4" y2="18" stroke="#00d4ff" stroke-width="1.2"/>
+        <line x1="9" y1="22" x2="4" y2="22" stroke="#00d4ff" stroke-width="1.2"/>
+        <!-- Pins right -->
+        <line x1="27" y1="14" x2="32" y2="14" stroke="#00ff88" stroke-width="1.2"/>
+        <line x1="27" y1="18" x2="32" y2="18" stroke="#00ff88" stroke-width="1.2"/>
+        <line x1="27" y1="22" x2="32" y2="22" stroke="#00ff88" stroke-width="1.2"/>
+        <!-- Pins top -->
+        <line x1="14" y1="9" x2="14" y2="4" stroke="#9b59ff" stroke-width="1.2"/>
+        <line x1="22" y1="9" x2="22" y2="4" stroke="#9b59ff" stroke-width="1.2"/>
+        <!-- CN letters -->
+        <text x="15" y="21" font-size="7" font-family="monospace" fill="#00d4ff" font-weight="bold">CN</text>
+      </svg>
+    </div>
+    <div>
+      <span class="nav-brand-name">DATASTROBE</span>
+      <span class="nav-brand-sub">CHAITANYA NAGISETTY</span>
+    </div>
+  </div>
+  <ul class="nav-links">
+    <li><a href="#bio">About</a></li>
+    <li><a href="#silicon">Silicon</a></li>
+    <li><a href="#skills">Skills</a></li>
+    <li><a href="#waveforms">Waveforms</a></li>
+    <li><a href="#projects">Projects</a></li>
+    <li><a href="#experience">Experience</a></li>
+    <li><a href="#ailab">AI Lab</a></li>
+    <li><a href="#status">Reports</a></li>
+
+    <li><a href="#contact" class="nav-cta">Contact</a></li>
+  </ul>
+</nav>
+
+<!-- ════════════════════ HERO ════════════════════ -->
+<section id="hero">
+  <div class="hero-eyebrow">// Senior Design Engineer · Memory & ASIC Verification</div>
+  <h1 class="hero-name">Nagisetty<br>Chaitanya</h1>
+  <p class="hero-title">
+    <span>DDR5</span> · <span>HBM3</span> · <span>DDR3 ASIC</span> · <span>UVM</span> · <span>JEDEC</span>
+  </p>
+
+  <!-- Data Eye SVG Logo -->
+  <div class="data-eye">
+    <svg viewBox="0 0 220 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <!-- Eye outline / data eye shape -->
+      <ellipse cx="110" cy="50" rx="100" ry="42" stroke="#00d4ff" stroke-width="1" stroke-dasharray="4 3" opacity="0.4"/>
+      <!-- Data eye opening (valid window) -->
+      <path d="M 45 50 Q 80 10 110 10 Q 140 10 175 50 Q 140 90 110 90 Q 80 90 45 50 Z"
+            stroke="#00d4ff" stroke-width="1.5" fill="rgba(0,212,255,0.04)"/>
+      <!-- Horizontal centre line -->
+      <line x1="10" y1="50" x2="210" y2="50" stroke="#00ff88" stroke-width="0.7" stroke-dasharray="3 3" opacity="0.5"/>
+      <!-- IDELAY tap – centre marker -->
+      <circle cx="110" cy="50" r="6" fill="none" stroke="#00d4ff" stroke-width="1.5"
+              style="animation: pulse-glow 2s infinite"/>
+      <circle cx="110" cy="50" r="2" fill="#00d4ff"/>
+      <!-- Waveform bits left side -->
+      <polyline points="10,50 30,50 30,22 50,22 50,50 70,50 70,28 90,28 90,50"
+                stroke="#9b59ff" stroke-width="1.2" fill="none" opacity="0.7"/>
+      <!-- Waveform bits right side -->
+      <polyline points="130,50 150,50 150,22 170,22 170,50 190,50 190,28 210,28"
+                stroke="#9b59ff" stroke-width="1.2" fill="none" opacity="0.7"/>
+      <!-- DQS strobe marker -->
+      <line x1="110" y1="10" x2="110" y2="90" stroke="#ff8c00" stroke-width="1.5" stroke-dasharray="4 2" opacity="0.8"/>
+      <!-- Labels -->
+      <text x="6" y="46" font-size="7" fill="#5a8a9f" font-family="monospace">DQ</text>
+      <text x="98" y="7" font-size="7" fill="#ff8c00" font-family="monospace">DQS</text>
+      <text x="88" y="62" font-size="8" fill="#00d4ff" font-family="monospace" font-weight="bold">DATA EYE</text>
+      <!-- Animated flow dots -->
+      <circle r="2.5" fill="#00d4ff" opacity="0.9">
+        <animateMotion dur="3s" repeatCount="indefinite" path="M 45 50 Q 80 10 110 10 Q 140 10 175 50"/>
+      </circle>
+      <circle r="2.5" fill="#00ff88" opacity="0.9">
+        <animateMotion dur="3s" begin="1.5s" repeatCount="indefinite" path="M 175 50 Q 140 90 110 90 Q 80 90 45 50"/>
+      </circle>
+    </svg>
+  </div>
+
+  <div class="hero-badges">
+    <span class="badge">DDR5 TAV/GLS</span>
+    <span class="badge">DDR3 ASIC Design</span>
+    <span class="badge">HBM3 VIP</span>
+    <span class="badge">UVM Methodology</span>
+    <span class="badge">AXI4 Protocol</span>
+    <span class="badge">JEDEC Compliance</span>
+    <span class="badge">SVA Assertions</span>
+    <span class="badge">CDC/UPF</span>
+    <span class="badge">Vivado / Questa / VCS</span>
+    <span class="badge">4+ Years</span>
+  </div>
+
+  <div class="hero-cta-row">
+    <a href="#projects" class="btn-primary">View Projects</a>
+    <a href="https://www.linkedin.com/in/chaitanya-nagisetty-87176919a" target="_blank" class="btn-outline">LinkedIn Profile</a>
+  </div>
+
+  <div class="hero-scroll">SCROLL</div>
+</section>
+
+<!-- ════════════════════ SILICON JOURNEY ════════════════════ -->
+<section id="silicon">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">Manufacturing Process</p>
+      <h2 class="section-title">From Sand to Silicon</h2>
+      <div class="section-line"></div>
+      <p style="color:var(--text-dim);margin-top:1rem;font-size:0.88rem;max-width:580px;margin-left:auto;margin-right:auto;">
+        Every DDR3 chip starts as SiO₂ in beach sand. Drag to scroll the complete semiconductor journey — 6 stages from raw material to packaged ASIC die.
+      </p>
+    </div>
+  </div>
+
+  <div class="silicon-track-wrap">
+    <div class="silicon-track" id="siliconTrack">
+
+      <!-- Stage 1: Sand -->
+      <div class="silicon-stage si-active" data-si="0">
+        <div class="si-num">Stage 01 — Extraction</div>
+        <div class="si-svg-box">
+          <svg viewBox="0 0 200 160" fill="none" width="200">
+            <!-- Hex crystal lattice — SiO2 -->
+            <defs>
+              <radialGradient id="sg1" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#c8a040" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="#6a4010" stop-opacity="0.2"/>
+              </radialGradient>
+            </defs>
+            <rect width="200" height="160" fill="#080500"/>
+            <!-- Background glow -->
+            <ellipse cx="100" cy="80" rx="70" ry="55" fill="rgba(180,120,40,0.06)"/>
+            <!-- SiO2 crystal hex cells -->
+            <g stroke="#c8a040" stroke-width="0.8" opacity="0.6">
+              <!-- Row 1 -->
+              <polygon points="55,40 65,34 75,40 75,52 65,58 55,52" fill="rgba(200,160,64,0.1)"/>
+              <polygon points="75,40 85,34 95,40 95,52 85,58 75,52" fill="rgba(200,160,64,0.08)"/>
+              <polygon points="95,40 105,34 115,40 115,52 105,58 95,52" fill="rgba(200,160,64,0.12)"/>
+              <polygon points="115,40 125,34 135,40 135,52 125,58 115,52" fill="rgba(200,160,64,0.07)"/>
+              <!-- Row 2 -->
+              <polygon points="45,58 55,52 65,58 65,70 55,76 45,70" fill="rgba(200,160,64,0.09)"/>
+              <polygon points="65,58 75,52 85,58 85,70 75,76 65,70" fill="rgba(200,160,64,0.14)"/>
+              <polygon points="85,58 95,52 105,58 105,70 95,76 85,70" fill="rgba(200,160,64,0.10)"/>
+              <polygon points="105,58 115,52 125,58 125,70 115,76 105,70" fill="rgba(200,160,64,0.13)"/>
+              <polygon points="125,58 135,52 145,58 145,70 135,76 125,70" fill="rgba(200,160,64,0.08)"/>
+              <!-- Row 3 -->
+              <polygon points="55,76 65,70 75,76 75,88 65,94 55,88" fill="rgba(200,160,64,0.11)"/>
+              <polygon points="75,76 85,70 95,76 95,88 85,94 75,88" fill="rgba(200,160,64,0.16)"/>
+              <polygon points="95,76 105,70 115,76 115,88 105,94 95,88" fill="rgba(200,160,64,0.09)"/>
+              <polygon points="115,76 125,70 135,76 135,88 125,94 115,88" fill="rgba(200,160,64,0.12)"/>
+              <!-- Row 4 -->
+              <polygon points="65,94 75,88 85,94 85,106 75,112 65,106" fill="rgba(200,160,64,0.08)"/>
+              <polygon points="85,94 95,88 105,94 105,106 95,112 85,106" fill="rgba(200,160,64,0.13)"/>
+              <polygon points="105,94 115,88 125,94 125,106 115,112 105,106" fill="rgba(200,160,64,0.10)"/>
+            </g>
+            <!-- Si and O atom markers -->
+            <circle cx="65" cy="46" r="3" fill="#e8c060" opacity="0.9"/>
+            <circle cx="95" cy="46" r="2.5" fill="#60b0ff" opacity="0.8"/>
+            <circle cx="85" cy="64" r="3" fill="#e8c060" opacity="0.9"/>
+            <circle cx="105" cy="82" r="2.5" fill="#60b0ff" opacity="0.8"/>
+            <circle cx="75" cy="82" r="3" fill="#e8c060" opacity="0.9"/>
+            <circle cx="95" cy="100" r="3" fill="#e8c060" opacity="0.9"/>
+            <!-- Labels -->
+            <text x="100" y="140" text-anchor="middle" font-size="8" fill="#c8a040" font-family="monospace" opacity="0.9">SiO₂  Crystal Lattice</text>
+            <text x="162" y="46" font-size="6.5" fill="#e8c060" font-family="monospace">● Si</text>
+            <text x="162" y="58" font-size="6.5" fill="#60b0ff" font-family="monospace">● O</text>
+          </svg>
+        </div>
+        <div class="si-title">Silicon Dioxide (SiO₂)</div>
+        <div class="si-desc">Quartz sand — 99.7% SiO₂ — is reduced with carbon at 1600 °C to produce metallurgical-grade silicon, the foundation of all VLSI devices.</div>
+        <div class="si-spec">SiO₂ + 2C → Si + 2CO  ·  MGS ~98% pure</div>
+      </div>
+
+      <!-- Stage 2: Polysilicon -->
+      <div class="silicon-stage" data-si="1">
+        <div class="si-num">Stage 02 — Purification</div>
+        <div class="si-svg-box">
+          <svg viewBox="0 0 200 160" fill="none" width="200">
+            <rect width="200" height="160" fill="#060810"/>
+            <ellipse cx="100" cy="80" rx="60" ry="50" fill="rgba(180,200,255,0.03)"/>
+            <!-- Polysilicon rods -->
+            <g>
+              <!-- Rod columns -->
+              <rect x="30" y="25" width="16" height="110" rx="3" fill="rgba(180,200,240,0.12)" stroke="#a0b8e0" stroke-width="0.7"/>
+              <rect x="52" y="30" width="16" height="100" rx="3" fill="rgba(180,200,240,0.10)" stroke="#a0b8e0" stroke-width="0.7"/>
+              <rect x="74" y="20" width="16" height="120" rx="3" fill="rgba(180,200,240,0.14)" stroke="#a0b8e0" stroke-width="0.7"/>
+              <rect x="96" y="28" width="16" height="108" rx="3" fill="rgba(180,200,240,0.11)" stroke="#a0b8e0" stroke-width="0.7"/>
+              <rect x="118" y="22" width="16" height="116" rx="3" fill="rgba(180,200,240,0.13)" stroke="#a0b8e0" stroke-width="0.7"/>
+              <rect x="140" y="33" width="16" height="96" rx="3" fill="rgba(180,200,240,0.09)" stroke="#a0b8e0" stroke-width="0.7"/>
+              <rect x="162" y="26" width="16" height="108" rx="3" fill="rgba(180,200,240,0.10)" stroke="#a0b8e0" stroke-width="0.7"/>
+              <!-- Grain boundaries horizontal lines -->
+              <line x1="30" y1="55" x2="46" y2="55" stroke="rgba(160,184,220,0.4)" stroke-width="0.5"/>
+              <line x1="30" y1="85" x2="46" y2="85" stroke="rgba(160,184,220,0.4)" stroke-width="0.5"/>
+              <line x1="52" y1="68" x2="68" y2="68" stroke="rgba(160,184,220,0.4)" stroke-width="0.5"/>
+              <line x1="52" y1="100" x2="68" y2="100" stroke="rgba(160,184,220,0.4)" stroke-width="0.5"/>
+              <line x1="74" y1="50" x2="90" y2="50" stroke="rgba(160,184,220,0.4)" stroke-width="0.5"/>
+              <line x1="74" y1="90" x2="90" y2="90" stroke="rgba(160,184,220,0.4)" stroke-width="0.5"/>
+              <line x1="96" y1="72" x2="112" y2="72" stroke="rgba(160,184,220,0.4)" stroke-width="0.5"/>
+              <line x1="118" y1="58" x2="134" y2="58" stroke="rgba(160,184,220,0.4)" stroke-width="0.5"/>
+              <line x1="118" y1="95" x2="134" y2="95" stroke="rgba(160,184,220,0.4)" stroke-width="0.5"/>
+            </g>
+            <!-- Purity indicator -->
+            <text x="100" y="148" text-anchor="middle" font-size="7.5" fill="#a0b8e0" font-family="monospace">Siemens CVD Process</text>
+            <text x="100" y="158" text-anchor="middle" font-size="7" fill="#5a7a9f" font-family="monospace">Purity: 11N (99.999999999%)</text>
+          </svg>
+        </div>
+        <div class="si-title">Electronic-Grade Polysilicon</div>
+        <div class="si-desc">Trichlorosilane (SiHCl₃) is decomposed at 1100 °C in the Siemens CVD process, depositing ultra-pure polysilicon rods — 11-nines purity.</div>
+        <div class="si-spec">SiHCl₃ + H₂ → Si + 3HCl  ·  11N purity</div>
+      </div>
+
+      <!-- Stage 3: Czochralski Ingot -->
+      <div class="silicon-stage" data-si="2">
+        <div class="si-num">Stage 03 — Crystal Growth</div>
+        <div class="si-svg-box">
+          <svg viewBox="0 0 200 160" fill="none" width="200">
+            <rect width="200" height="160" fill="#080608"/>
+            <!-- Melt crucible -->
+            <ellipse cx="100" cy="138" rx="55" ry="14" fill="rgba(255,140,0,0.15)" stroke="#ff8c00" stroke-width="0.8" stroke-dasharray="3 2"/>
+            <rect x="46" y="125" width="108" height="18" fill="rgba(255,100,0,0.08)"/>
+            <!-- Ingot body (cylinder perspective) -->
+            <defs>
+              <linearGradient id="ing1" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" stop-color="#c0c8d8" stop-opacity="0.3"/>
+                <stop offset="30%" stop-color="#e0e8f8" stop-opacity="0.8"/>
+                <stop offset="70%" stop-color="#e8f0ff" stop-opacity="0.9"/>
+                <stop offset="100%" stop-color="#9098a8" stop-opacity="0.4"/>
+              </linearGradient>
+            </defs>
+            <rect x="72" y="28" width="56" height="100" fill="url(#ing1)" rx="2"/>
+            <!-- Top ellipse -->
+            <ellipse cx="100" cy="28" rx="28" ry="8" fill="#d0d8e8" stroke="#c0c8d8" stroke-width="0.8"/>
+            <!-- Concentric growth rings on top face -->
+            <ellipse cx="100" cy="28" rx="22" ry="6" fill="none" stroke="rgba(160,168,188,0.5)" stroke-width="0.5"/>
+            <ellipse cx="100" cy="28" rx="15" ry="4" fill="none" stroke="rgba(160,168,188,0.5)" stroke-width="0.5"/>
+            <ellipse cx="100" cy="28" rx="8"  ry="2.2" fill="none" stroke="rgba(160,168,188,0.5)" stroke-width="0.5"/>
+            <!-- Seed crystal at top -->
+            <rect x="94" y="14" width="12" height="16" fill="rgba(200,210,230,0.6)" stroke="#a0a8b8" stroke-width="0.6" rx="1"/>
+            <text x="100" y="12" text-anchor="middle" font-size="6" fill="#a0a8b8" font-family="monospace">SEED</text>
+            <!-- Pull wire -->
+            <line x1="100" y1="4" x2="100" y2="14" stroke="#a0a8b8" stroke-width="0.8"/>
+            <!-- Diameter label -->
+            <line x1="72" y1="80" x2="128" y2="80" stroke="rgba(0,212,255,0.3)" stroke-width="0.6"/>
+            <line x1="72" y1="76" x2="72" y2="84" stroke="rgba(0,212,255,0.3)" stroke-width="0.6"/>
+            <line x1="128" y1="76" x2="128" y2="84" stroke="rgba(0,212,255,0.3)" stroke-width="0.6"/>
+            <text x="100" y="75" text-anchor="middle" font-size="6.5" fill="#00d4ff" font-family="monospace">300mm</text>
+            <!-- Melt glow -->
+            <ellipse cx="100" cy="134" rx="50" ry="10" fill="rgba(255,120,0,0.12)"/>
+            <text x="100" y="154" text-anchor="middle" font-size="6.5" fill="#ff8c00" font-family="monospace">Si melt @ 1414 °C</text>
+          </svg>
+        </div>
+        <div class="si-title">Czochralski Crystal Ingot</div>
+        <div class="si-desc">A seed crystal is slowly pulled from a 1414 °C silicon melt, rotating to grow a single-crystal cylindrical ingot 300 mm in diameter and up to 2 m long.</div>
+        <div class="si-spec">300mm dia · CZ process · &lt;100&gt; orientation</div>
+      </div>
+
+      <!-- Stage 4: Wafer Slice -->
+      <div class="silicon-stage" data-si="3">
+        <div class="si-num">Stage 04 — Wafering</div>
+        <div class="si-svg-box">
+          <svg viewBox="0 0 200 160" fill="none" width="200">
+            <rect width="200" height="160" fill="#060810"/>
+            <defs>
+              <radialGradient id="wfr1" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" stop-color="#a0b8d8" stop-opacity="0.6"/>
+                <stop offset="60%" stop-color="#8090a8" stop-opacity="0.5"/>
+                <stop offset="100%" stop-color="#506078" stop-opacity="0.3"/>
+              </radialGradient>
+            </defs>
+            <!-- Wafer circle -->
+            <circle cx="100" cy="78" r="60" fill="url(#wfr1)" stroke="#a0b0c8" stroke-width="1"/>
+            <!-- Flat edge (orientation flat) -->
+            <path d="M 62 128 A 60 60 0 0 0 138 128 L 62 128 Z" fill="#607080" stroke="#a0b0c8" stroke-width="0.5"/>
+            <!-- Die grid on wafer -->
+            <g stroke="rgba(0,212,255,0.25)" stroke-width="0.4">
+              <!-- Horizontal grid lines -->
+              <line x1="44" y1="48" x2="156" y2="48"/>
+              <line x1="44" y1="60" x2="156" y2="60"/>
+              <line x1="44" y1="72" x2="156" y2="72"/>
+              <line x1="44" y1="84" x2="156" y2="84"/>
+              <line x1="44" y1="96" x2="156" y2="96"/>
+              <line x1="44" y1="108" x2="156" y2="108"/>
+              <!-- Vertical grid lines -->
+              <line x1="56" y1="20" x2="56" y2="136"/>
+              <line x1="68" y1="20" x2="68" y2="136"/>
+              <line x1="80" y1="20" x2="80" y2="136"/>
+              <line x1="92" y1="20" x2="92" y2="136"/>
+              <line x1="104" y1="20" x2="104" y2="136"/>
+              <line x1="116" y1="20" x2="116" y2="136"/>
+              <line x1="128" y1="20" x2="128" y2="136"/>
+              <line x1="140" y1="20" x2="140" y2="136"/>
+            </g>
+            <!-- Highlight a few dies -->
+            <rect x="80" y="60" width="12" height="12" fill="rgba(0,212,255,0.15)" stroke="rgba(0,212,255,0.5)" stroke-width="0.5"/>
+            <rect x="92" y="72" width="12" height="12" fill="rgba(0,255,136,0.15)" stroke="rgba(0,255,136,0.5)" stroke-width="0.5"/>
+            <rect x="104" y="60" width="12" height="12" fill="rgba(0,212,255,0.15)" stroke="rgba(0,212,255,0.5)" stroke-width="0.5"/>
+            <!-- Clip to wafer circle -->
+            <circle cx="100" cy="78" r="60" fill="none" stroke="#a0b0c8" stroke-width="1.5"/>
+            <!-- Notch -->
+            <circle cx="100" cy="18" r="2.5" fill="#060810" stroke="#a0b0c8" stroke-width="0.8"/>
+            <text x="100" y="152" text-anchor="middle" font-size="7" fill="#a0b0c8" font-family="monospace">300mm  ·  ~500 dies/wafer</text>
+          </svg>
+        </div>
+        <div class="si-title">Silicon Wafer</div>
+        <div class="si-desc">Diamond wire saws slice the ingot into 775 μm-thick wafers. Chemical mechanical planarization (CMP) achieves sub-nanometer surface flatness for lithography.</div>
+        <div class="si-spec">300mm · 0.775mm thick · Ra &lt; 0.1nm</div>
+      </div>
+
+      <!-- Stage 5: Lithography / Die -->
+      <div class="silicon-stage" data-si="4">
+        <div class="si-num">Stage 05 — Lithography</div>
+        <div class="si-svg-box">
+          <svg viewBox="0 0 200 160" fill="none" width="200">
+            <rect width="200" height="160" fill="#050315"/>
+            <!-- EUV beam from top -->
+            <defs>
+              <linearGradient id="euv1" x1="50%" y1="0%" x2="50%" y2="100%">
+                <stop offset="0%" stop-color="#9b59ff" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="#9b59ff" stop-opacity="0.05"/>
+              </linearGradient>
+              <linearGradient id="lay1" x1="0%" y1="0%" x2="0%" y2="100%">
+                <stop offset="0%" stop-color="#2a4a8a" stop-opacity="0.8"/>
+                <stop offset="100%" stop-color="#1a3060" stop-opacity="0.6"/>
+              </linearGradient>
+            </defs>
+            <!-- EUV beam cone -->
+            <polygon points="100,4 78,70 122,70" fill="url(#euv1)" opacity="0.4"/>
+            <line x1="100" y1="4" x2="100" y2="70" stroke="#9b59ff" stroke-width="0.8" stroke-dasharray="3 2"/>
+            <!-- Reticle/mask -->
+            <rect x="60" y="10" width="80" height="18" fill="rgba(155,89,255,0.12)" stroke="#9b59ff" stroke-width="0.8" rx="2"/>
+            <text x="100" y="23" text-anchor="middle" font-size="6.5" fill="#9b59ff" font-family="monospace">EUV RETICLE (13.5nm)</text>
+            <!-- Wafer surface layers (cross-section) -->
+            <!-- Photoresist layer -->
+            <rect x="30" y="70" width="140" height="10" fill="rgba(100,200,100,0.25)" stroke="rgba(100,200,100,0.4)" stroke-width="0.6"/>
+            <text x="12" y="78" font-size="5.5" fill="#80c880" font-family="monospace">PR</text>
+            <!-- ARC layer -->
+            <rect x="30" y="80" width="140" height="6" fill="rgba(0,150,200,0.2)" stroke="rgba(0,150,200,0.3)" stroke-width="0.5"/>
+            <!-- Metal layer -->
+            <rect x="30" y="86" width="140" height="8" fill="rgba(200,180,100,0.2)" stroke="rgba(200,180,100,0.3)" stroke-width="0.5"/>
+            <text x="174" y="92" font-size="5.5" fill="#c8b464" font-family="monospace">M1</text>
+            <!-- Pattern after exposure (simplified) -->
+            <rect x="54" y="86" width="12" height="8" fill="rgba(200,180,100,0.5)"/>
+            <rect x="80" y="86" width="8" height="8" fill="rgba(200,180,100,0.5)"/>
+            <rect x="106" y="86" width="14" height="8" fill="rgba(200,180,100,0.5)"/>
+            <rect x="136" y="86" width="10" height="8" fill="rgba(200,180,100,0.5)"/>
+            <!-- Via layer -->
+            <rect x="30" y="94" width="140" height="6" fill="rgba(180,100,200,0.15)" stroke="rgba(180,100,200,0.25)" stroke-width="0.5"/>
+            <!-- Silicon substrate -->
+            <rect x="30" y="100" width="140" height="24" fill="url(#lay1)" stroke="#2a6090" stroke-width="0.6"/>
+            <text x="100" y="115" text-anchor="middle" font-size="6.5" fill="#4080b0" font-family="monospace">Si Substrate (bulk)</text>
+            <!-- FinFET fins (simplified) -->
+            <g fill="rgba(0,150,255,0.6)">
+              <rect x="55" y="94" width="3" height="12"/>
+              <rect x="62" y="94" width="3" height="12"/>
+              <rect x="82" y="94" width="3" height="12"/>
+              <rect x="89" y="94" width="3" height="12"/>
+              <rect x="108" y="94" width="3" height="12"/>
+              <rect x="115" y="94" width="3" height="12"/>
+              <rect x="138" y="94" width="3" height="12"/>
+            </g>
+            <text x="100" y="145" text-anchor="middle" font-size="6.5" fill="#9b59ff" font-family="monospace">EUV Lithography — 5nm node</text>
+            <text x="100" y="155" text-anchor="middle" font-size="6" fill="#5a5a7a" font-family="monospace">~100 mask layers · FinFET / GAA</text>
+          </svg>
+        </div>
+        <div class="si-title">EUV Lithography</div>
+        <div class="si-desc">13.5 nm extreme ultraviolet light exposes patterns on photoresist through a reticle mask. Repeated for ~100 layers to build transistors, vias, and metal interconnects.</div>
+        <div class="si-spec">EUV · 13.5nm wavelength · 5nm node</div>
+      </div>
+
+      <!-- Stage 6: Packaged Chip -->
+      <div class="silicon-stage" data-si="5">
+        <div class="si-num">Stage 06 — Packaging</div>
+        <div class="si-svg-box">
+          <svg viewBox="0 0 200 160" fill="none" width="200">
+            <rect width="200" height="160" fill="#050810"/>
+            <defs>
+              <linearGradient id="pkg1" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stop-color="#1a2a3a" stop-opacity="1"/>
+                <stop offset="100%" stop-color="#0a1520" stop-opacity="1"/>
+              </linearGradient>
+            </defs>
+            <!-- PCB substrate (bottom) -->
+            <rect x="15" y="120" width="170" height="26" rx="3" fill="rgba(0,80,30,0.3)" stroke="#005020" stroke-width="0.8"/>
+            <!-- PCB traces -->
+            <line x1="35"  y1="128" x2="35"  y2="120" stroke="#c8a040" stroke-width="1.2"/>
+            <line x1="50"  y1="128" x2="50"  y2="120" stroke="#c8a040" stroke-width="1.2"/>
+            <line x1="80"  y1="128" x2="80"  y2="120" stroke="#c8a040" stroke-width="1.2"/>
+            <line x1="100" y1="128" x2="100" y2="120" stroke="#c8a040" stroke-width="1.2"/>
+            <line x1="120" y1="128" x2="120" y2="120" stroke="#c8a040" stroke-width="1.2"/>
+            <line x1="150" y1="128" x2="150" y2="120" stroke="#c8a040" stroke-width="1.2"/>
+            <line x1="165" y1="128" x2="165" y2="120" stroke="#c8a040" stroke-width="1.2"/>
+            <!-- BGA solder balls (grid) -->
+            <g fill="#c8a040" opacity="0.8">
+              <circle cx="45"  cy="115" r="3"/> <circle cx="60"  cy="115" r="3"/> <circle cx="75"  cy="115" r="3"/> <circle cx="90"  cy="115" r="3"/>
+              <circle cx="105" cy="115" r="3"/> <circle cx="120" cy="115" r="3"/> <circle cx="135" cy="115" r="3"/> <circle cx="150" cy="115" r="3"/>
+              <circle cx="45"  cy="106" r="3"/> <circle cx="60"  cy="106" r="3"/> <circle cx="75"  cy="106" r="3"/> <circle cx="90"  cy="106" r="3"/>
+              <circle cx="105" cy="106" r="3"/> <circle cx="120" cy="106" r="3"/> <circle cx="135" cy="106" r="3"/> <circle cx="150" cy="106" r="3"/>
+            </g>
+            <!-- Package body -->
+            <rect x="35" y="42" width="130" height="62" rx="4" fill="url(#pkg1)" stroke="#2a4a6a" stroke-width="1.2"/>
+            <!-- Die exposed on top (cavity) -->
+            <rect x="60" y="50" width="80" height="48" rx="2" fill="#020a14" stroke="#00d4ff" stroke-width="0.8"/>
+            <!-- Die surface circuit pattern -->
+            <g stroke="rgba(0,212,255,0.3)" stroke-width="0.4">
+              <line x1="65" y1="60" x2="135" y2="60"/> <line x1="65" y1="70" x2="135" y2="70"/>
+              <line x1="65" y1="80" x2="135" y2="80"/> <line x1="65" y1="90" x2="135" y2="90"/>
+              <line x1="75" y1="52" x2="75" y2="96"/> <line x1="90" y1="52" x2="90" y2="96"/>
+              <line x1="105" y1="52" x2="105" y2="96"/> <line x1="120" y1="52" x2="120" y2="96"/>
+            </g>
+            <!-- Functional blocks on die -->
+            <rect x="67" y="55" width="20" height="14" fill="rgba(0,212,255,0.08)" stroke="rgba(0,212,255,0.3)" stroke-width="0.5" rx="1"/>
+            <rect x="93" y="55" width="26" height="14" fill="rgba(0,255,136,0.08)" stroke="rgba(0,255,136,0.3)" stroke-width="0.5" rx="1"/>
+            <rect x="67" y="75" width="52" height="16" fill="rgba(155,89,255,0.08)" stroke="rgba(155,89,255,0.3)" stroke-width="0.5" rx="1"/>
+            <text x="77" y="64" text-anchor="middle" font-size="4.5" fill="rgba(0,212,255,0.7)" font-family="monospace">PHY</text>
+            <text x="106" y="64" text-anchor="middle" font-size="4.5" fill="rgba(0,255,136,0.7)" font-family="monospace">CTRL</text>
+            <text x="93" y="85" text-anchor="middle" font-size="4.5" fill="rgba(155,89,255,0.7)" font-family="monospace">AXI4 SLAVE</text>
+            <!-- Bond wires from die to package pads -->
+            <g stroke="#c8a040" stroke-width="0.7" fill="none" opacity="0.7">
+              <path d="M 65 55 Q 52 46 43 46"/>
+              <path d="M 65 65 Q 48 56 43 56"/>
+              <path d="M 65 75 Q 50 68 43 68"/>
+              <path d="M 135 55 Q 148 46 157 46"/>
+              <path d="M 135 65 Q 150 56 157 56"/>
+              <path d="M 135 75 Q 152 68 157 68"/>
+            </g>
+            <!-- Package pins (top) -->
+            <g fill="#c8a040" opacity="0.7">
+              <rect x="36" y="42" width="4" height="8" rx="1"/>
+              <rect x="42" y="42" width="4" height="8" rx="1"/>
+              <rect x="48" y="42" width="4" height="8" rx="1"/>
+              <rect x="154" y="42" width="4" height="8" rx="1"/>
+              <rect x="160" y="42" width="4" height="8" rx="1"/>
+            </g>
+            <!-- Chip label -->
+            <text x="100" y="97" text-anchor="middle" font-size="5.5" fill="#00d4ff" font-family="monospace" font-weight="bold">DDR3 ASIC CTRL</text>
+            <text x="100" y="150" text-anchor="middle" font-size="7" fill="#a0b0c8" font-family="monospace">BGA Package · Ready for PCB</text>
+          </svg>
+        </div>
+        <div class="si-title">Packaged ASIC</div>
+        <div class="si-desc">The die is bonded to a substrate with gold bond wires or flip-chip bumps, encapsulated in epoxy mold compound. BGA solder balls form the final PCB interface.</div>
+        <div class="si-spec">BGA · flip-chip · 400 MHz · DDR3 CTRL</div>
+      </div>
+
+    </div><!-- /track -->
+  </div><!-- /wrap -->
+
+  <div class="si-dots" id="siDots">
+    <div class="si-dot active" onclick="scrollSilicon(0)"></div>
+    <div class="si-dot" onclick="scrollSilicon(1)"></div>
+    <div class="si-dot" onclick="scrollSilicon(2)"></div>
+    <div class="si-dot" onclick="scrollSilicon(3)"></div>
+    <div class="si-dot" onclick="scrollSilicon(4)"></div>
+    <div class="si-dot" onclick="scrollSilicon(5)"></div>
+  </div>
+</section>
+
+<!-- ════════════════════ BIO ════════════════════ -->
+<section id="bio">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">Professional Bio</p>
+      <h2 class="section-title">Who I Am</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="bio-grid">
+      <div class="bio-stats reveal">
+        <div class="stat-card">
+          <div class="stat-num">4<span>+</span></div>
+          <div class="stat-label">Years in VLSI Verification</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">3</div>
+          <div class="stat-label">Memory Protocols — DDR5, DDR3, HBM3</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">95<span>%</span></div>
+          <div class="stat-label">Issue-Resolution Rate · Intel 50K-Packet Suite</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">30<span>%</span></div>
+          <div class="stat-label">Debug Turnaround Improvement via SV→UVM Upgrade</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-num">400<span>MHz</span></div>
+          <div class="stat-label">DDR3 ASIC Controller Target Frequency</div>
+        </div>
+      </div>
+      <div class="bio-text reveal">
+        <p>
+          I am <strong>Nagisetty Chaitanya</strong>, a <em>Senior Design Engineer</em> specialising in
+          <strong>memory subsystem verification</strong> and <strong>ASIC controller design</strong>.
+          With over four years at the intersection of RTL design and silicon-grade verification,
+          my work spans the full stack from JEDEC protocol compliance down to gate-level simulation
+          and SDF back-annotation.
+        </p>
+        <p>
+          Currently embedded at <strong>Micron Technology, Hyderabad</strong>, I run
+          <strong>Timing Accurate Verilog (TAV)</strong> simulations on the DDR5 SDRAM full chip —
+          injecting real standard-cell gate delays to expose timing violations that RTL simulation
+          cannot surface. I am actively ramping up on <strong>Gate-Level Simulation (GLS)</strong>
+          with SDF back-annotation across DDR5 Write and Read data paths.
+        </p>
+        <p>
+          My flagship independent project is a <strong>fully JEDEC-compliant DDR3 ASIC
+          controller</strong> — designed from scratch at 400 MHz targeting ASIC-grade quality,
+          featuring AXI4 slave interface, PHY-level OSERDES/ISERDES training, write levelling,
+          read calibration, UPF multi-voltage, CDC closure, and post-synthesis GLS verification.
+        </p>
+        <p>
+          At <strong>Sevya Multimedia</strong>, I led a 5-member team building an
+          <strong>HBM3 UVM Verification IP</strong> compliant with JEDEC HBM3 specification —
+          covering 16 independent memory channels, seamless/non-seamless burst sequences,
+          NOP insertion logic, and SystemVerilog Assertion (SVA) protocol checkers.
+        </p>
+        <div class="bio-highlights">
+          <span class="highlight-tag">JEDEC DDR5 / DDR3 / HBM3</span>
+          <span class="highlight-tag">UVM Layered Testbench</span>
+          <span class="highlight-tag">AXI4 / AHB / APB</span>
+          <span class="highlight-tag">SVA Protocol Checkers</span>
+          <span class="highlight-tag">TAV & GLS @ Micron</span>
+          <span class="highlight-tag">SDC / UPF / CDC</span>
+          <span class="highlight-tag">Vivado · Questa · VCS</span>
+          <span class="highlight-tag">ATPG Patterns</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ SKILLS ════════════════════ -->
+<section id="skills">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">Technical Expertise</p>
+      <h2 class="section-title">Core Skills</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="skills-grid">
+      <div class="skill-category reveal">
+        <div class="skill-cat-icon">🧠</div>
+        <div class="skill-cat-name">Languages</div>
+        <div class="skill-tags">
+          <span class="skill-tag">SystemVerilog</span>
+          <span class="skill-tag">Verilog</span>
+          <span class="skill-tag">UVM</span>
+          <span class="skill-tag">SVA</span>
+          <span class="skill-tag">Tcl/Shell</span>
+        </div>
+      </div>
+      <div class="skill-category reveal">
+        <div class="skill-cat-icon">🔬</div>
+        <div class="skill-cat-name">Verification</div>
+        <div class="skill-tags">
+          <span class="skill-tag">UVM Methodology</span>
+          <span class="skill-tag">TAV</span>
+          <span class="skill-tag">GLS / SDF</span>
+          <span class="skill-tag">Formal V&V</span>
+          <span class="skill-tag">Functional Coverage</span>
+          <span class="skill-tag">Regression</span>
+          <span class="skill-tag">ATPG</span>
+        </div>
+      </div>
+      <div class="skill-category reveal">
+        <div class="skill-cat-icon">💾</div>
+        <div class="skill-cat-name">Memory Protocols</div>
+        <div class="skill-tags">
+          <span class="skill-tag">DDR5 SDRAM</span>
+          <span class="skill-tag">DDR3 SDRAM</span>
+          <span class="skill-tag">HBM3</span>
+          <span class="skill-tag">JEDEC Compliance</span>
+          <span class="skill-tag">OSERDES / ISERDES</span>
+          <span class="skill-tag">DQS Alignment</span>
+        </div>
+      </div>
+      <div class="skill-category reveal">
+        <div class="skill-cat-icon">🔌</div>
+        <div class="skill-cat-name">Bus Protocols</div>
+        <div class="skill-tags">
+          <span class="skill-tag">AXI4 / AXI3</span>
+          <span class="skill-tag">AHB</span>
+          <span class="skill-tag">APB</span>
+          <span class="skill-tag">TileLink (TL-UL)</span>
+        </div>
+      </div>
+      <div class="skill-category reveal">
+        <div class="skill-cat-icon">⚙️</div>
+        <div class="skill-cat-name">ASIC / Design</div>
+        <div class="skill-tags">
+          <span class="skill-tag">RTL Design</span>
+          <span class="skill-tag">Synthesis</span>
+          <span class="skill-tag">STA</span>
+          <span class="skill-tag">SDC Constraints</span>
+          <span class="skill-tag">UPF / Multi-Voltage</span>
+          <span class="skill-tag">CDC Analysis</span>
+          <span class="skill-tag">Physical Design</span>
+        </div>
+      </div>
+      <div class="skill-category reveal">
+        <div class="skill-cat-icon">🛠️</div>
+        <div class="skill-cat-name">Tools</div>
+        <div class="skill-tags">
+          <span class="skill-tag">Vivado</span>
+          <span class="skill-tag">Questa Sim</span>
+          <span class="skill-tag">VCS</span>
+          <span class="skill-tag">Cadence RTL Compiler</span>
+          <span class="skill-tag">Git / GitHub</span>
+          <span class="skill-tag">EDA Playground</span>
+          <span class="skill-tag">Verilator</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ WAVEFORM ANALYZER ════════════════════ -->
+<section id="waveforms">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">Live Signal Simulation</p>
+      <h2 class="section-title">DDR3 Waveform Analyzer</h2>
+      <div class="section-line"></div>
+      <p style="color:var(--text-dim);margin-top:1rem;font-size:0.88rem;">
+        Real-time parallel waveform display — DDR3 Write &amp; Read transactions at 400 MHz.
+        Select a transaction type and watch the signals unfold cycle-by-cycle.
+      </p>
+    </div>
+    <div class="wave-toolbar reveal">
+      <button class="wave-btn wactive" id="wbtn-wr" onclick="setWaveMode('write',this)">▶ WRITE TXN</button>
+      <button class="wave-btn" id="wbtn-rd" onclick="setWaveMode('read',this)">▶ READ TXN</button>
+      <div class="wave-sep"></div>
+      <button class="wave-btn" id="wbtn-play" onclick="toggleWave()">⏸ PAUSE</button>
+      <button class="wave-btn" onclick="resetWave()">↺ RESET</button>
+      <div class="wave-mode-tag">MODE: <span id="waveModeLabel">DDR3 WRITE</span></div>
+    </div>
+    <div class="wave-outer reveal">
+      <canvas id="waveCanvas" width="1120" height="400"></canvas>
+    </div>
+    <div class="wave-legend reveal">
+      <div class="wl-item"><div class="wl-swatch" style="background:#00d4ff"></div>CK± (400 MHz)</div>
+      <div class="wl-item"><div class="wl-swatch" style="background:#ff3860"></div>CS# / CMD Bus</div>
+      <div class="wl-item"><div class="wl-swatch" style="background:#9b59ff"></div>ADDR [15:0]</div>
+      <div class="wl-item"><div class="wl-swatch" style="background:#ff8c00"></div>DQS[0] Strobe</div>
+      <div class="wl-item"><div class="wl-swatch" style="background:#00ff88"></div>DQ[7:0] Data</div>
+      <div class="wl-item"><div class="wl-swatch" style="background:#c8a040"></div>VALID Window</div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ PROJECTS ════════════════════ -->
+<section id="projects">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">Engineering Work</p>
+      <h2 class="section-title">Projects</h2>
+      <div class="section-line"></div>
+    </div>
+
+    <!-- ─── PROJECT 1: DDR3 ASIC ─── -->
+    <div class="project-card featured reveal">
+      <div class="project-inner">
+        <div class="project-content">
+          <span class="project-badge badge-personal">Personal · Open Source</span>
+          <h3 class="project-name">DDR3 SDRAM ASIC Controller</h3>
+          <p class="project-subtitle">Full Custom JEDEC-Compliant Memory Controller · 400 MHz ASIC Target</p>
+          <p class="project-desc">
+            A complete DDR3 memory controller designed from scratch — the hardware block between
+            a processor and DRAM that handles every read/write request. Targets ASIC-grade quality
+            with full SDC constraints, UPF multi-voltage, CDC synchroniser insertion between AXI
+            and DDR3 clock domains, and post-synthesis GLS verification. Currently the most
+            comprehensive open-source DDR3 controller with PHY-level training included.
+          </p>
+          <div class="project-tech-stack">
+            <span class="tech-chip">Verilog RTL</span>
+            <span class="tech-chip">UVM Testbench</span>
+            <span class="tech-chip">AXI4 Slave</span>
+            <span class="tech-chip">OSERDES / ISERDES</span>
+            <span class="tech-chip">Write Levelling FSM</span>
+            <span class="tech-chip">Read IDELAY Cal.</span>
+            <span class="tech-chip">SDC / UPF / CDC</span>
+            <span class="tech-chip">GLS / SDF</span>
+            <span class="tech-chip">Vivado 400MHz</span>
+            <span class="tech-chip">JEDEC DDR3</span>
+          </div>
+          <div class="project-links">
+            <a class="plink" href="https://github.com/chaitanyanagi/DDR3_CONTROLLER_UPDATED" target="_blank">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+              GitHub Repo
+            </a>
+          </div>
+        </div>
+        <div class="project-diagram">
+          <!-- DDR3 Controller Architecture SVG -->
+          <svg viewBox="0 0 380 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M 0 0 L 6 3 L 0 6 Z" fill="#00d4ff"/>
+              </marker>
+              <marker id="arr-g" markerWidth="6" markerHeight="6" refX="5" refY="3" orient="auto">
+                <path d="M 0 0 L 6 3 L 0 6 Z" fill="#00ff88"/>
+              </marker>
+            </defs>
+
+            <!-- SoC AXI Master (top left) -->
+            <rect x="8" y="10" width="80" height="44" rx="4" fill="#0a1a24" stroke="#9b59ff" stroke-width="1"/>
+            <text x="48" y="29" text-anchor="middle" font-size="8" fill="#9b59ff" font-family="monospace" font-weight="bold">SoC / CPU</text>
+            <text x="48" y="43" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">AXI4 Master</text>
+
+            <!-- AXI4 Interface box -->
+            <rect x="130" y="10" width="100" height="44" rx="4" fill="#0a1a24" stroke="#00d4ff" stroke-width="1.5"/>
+            <text x="180" y="28" text-anchor="middle" font-size="8" fill="#00d4ff" font-family="monospace" font-weight="bold">AXI4 SLAVE</text>
+            <text x="180" y="42" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">INCR / WRAP Burst</text>
+
+            <!-- Arrow SoC → AXI -->
+            <line x1="88" y1="32" x2="128" y2="32" stroke="#9b59ff" stroke-width="1.2" marker-end="url(#arr)"/>
+
+            <!-- Command Queue / Scheduler -->
+            <rect x="130" y="80" width="100" height="44" rx="4" fill="#0a1a24" stroke="#00d4ff" stroke-width="1"/>
+            <text x="180" y="98" text-anchor="middle" font-size="8" fill="#00d4ff" font-family="monospace" font-weight="bold">CMD QUEUE</text>
+            <text x="180" y="112" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">Scheduler · Refresh</text>
+            <line x1="180" y1="54" x2="180" y2="78" stroke="#00d4ff" stroke-width="1" marker-end="url(#arr)"/>
+
+            <!-- Init Controller -->
+            <rect x="270" y="80" width="100" height="44" rx="4" fill="#0a1a24" stroke="#ff8c00" stroke-width="1"/>
+            <text x="320" y="98" text-anchor="middle" font-size="8" fill="#ff8c00" font-family="monospace" font-weight="bold">INIT FSM</text>
+            <text x="320" y="112" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">MRS · ZQ Cal · CKE</text>
+            <line x1="230" y1="102" x2="268" y2="102" stroke="#ff8c00" stroke-width="1" stroke-dasharray="3 2" marker-end="url(#arr)"/>
+
+            <!-- ECC -->
+            <rect x="8" y="80" width="100" height="44" rx="4" fill="#0a1a24" stroke="#00ff88" stroke-width="1"/>
+            <text x="58" y="98" text-anchor="middle" font-size="8" fill="#00ff88" font-family="monospace" font-weight="bold">ECC ENGINE</text>
+            <text x="58" y="112" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">SEC-DED Hamming</text>
+            <line x1="130" y1="32" x2="58" y2="32" stroke="#00ff88" stroke-width="0.8" stroke-dasharray="3 2"/>
+            <line x1="58" y1="78" x2="58" y2="80" stroke="#00ff88" stroke-width="0.8" marker-end="url(#arr-g)"/>
+            <line x1="58" y1="32" x2="58" y2="78" stroke="#00ff88" stroke-width="0.8"/>
+
+            <!-- PHY Top -->
+            <rect x="90" y="160" width="200" height="50" rx="4" fill="#0a1a24" stroke="#00d4ff" stroke-width="1.5"/>
+            <text x="190" y="181" text-anchor="middle" font-size="9" fill="#00d4ff" font-family="monospace" font-weight="bold">PHY LAYER</text>
+            <text x="190" y="197" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">OSERDES · ISERDES · DLL · DQS Gen</text>
+            <line x1="180" y1="124" x2="180" y2="158" stroke="#00d4ff" stroke-width="1.2" marker-end="url(#arr)"/>
+
+            <!-- Write Levelling -->
+            <rect x="8" y="232" width="100" height="36" rx="4" fill="#0a1a24" stroke="#9b59ff" stroke-width="1"/>
+            <text x="58" y="247" text-anchor="middle" font-size="7.5" fill="#9b59ff" font-family="monospace" font-weight="bold">WRITE LEVEL</text>
+            <text x="58" y="260" text-anchor="middle" font-size="6.5" fill="#5a8a9f" font-family="monospace">DQS→CK tap iter.</text>
+
+            <!-- Read Calibration -->
+            <rect x="272" y="232" width="100" height="36" rx="4" fill="#0a1a24" stroke="#9b59ff" stroke-width="1"/>
+            <text x="322" y="247" text-anchor="middle" font-size="7.5" fill="#9b59ff" font-family="monospace" font-weight="bold">READ CAL</text>
+            <text x="322" y="260" text-anchor="middle" font-size="6.5" fill="#5a8a9f" font-family="monospace">IDELAY eye centre</text>
+
+            <!-- Lines PHY → training blocks -->
+            <line x1="120" y1="210" x2="58" y2="230" stroke="#9b59ff" stroke-width="0.8" stroke-dasharray="3 2"/>
+            <line x1="260" y1="210" x2="322" y2="230" stroke="#9b59ff" stroke-width="0.8" stroke-dasharray="3 2"/>
+
+            <!-- DDR3 DRAM pads -->
+            <rect x="100" y="296" width="180" height="48" rx="4" fill="#0a1a24" stroke="#00ff88" stroke-width="1.5"/>
+            <text x="190" y="315" text-anchor="middle" font-size="9" fill="#00ff88" font-family="monospace" font-weight="bold">DDR3 DRAM</text>
+            <text x="190" y="332" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">DQ[15:0] · DQS[1:0] · CK±</text>
+
+            <!-- PHY → DDR3 with animated pulse -->
+            <line x1="190" y1="212" x2="190" y2="294" stroke="#00ff88" stroke-width="1.5" marker-end="url(#arr-g)"/>
+
+            <!-- Animated flow dot on main bus -->
+            <circle r="3" fill="#00d4ff">
+              <animateMotion dur="2s" repeatCount="indefinite"
+                path="M 180 54 L 180 78 L 180 124 L 180 158 L 190 212 L 190 294"/>
+            </circle>
+            <!-- Return path dot -->
+            <circle r="3" fill="#00ff88" opacity="0.8">
+              <animateMotion dur="2s" begin="1s" repeatCount="indefinite"
+                path="M 190 294 L 190 212 L 180 158 L 180 124 L 180 78 L 180 54"/>
+            </circle>
+
+            <!-- CDC boundary label -->
+            <line x1="8" y1="148" x2="372" y2="148" stroke="#ff3860" stroke-width="0.6" stroke-dasharray="6 3" opacity="0.5"/>
+            <text x="10" y="145" font-size="6.5" fill="#ff3860" font-family="monospace" opacity="0.7">CDC BOUNDARY · axi_clk ↔ ctrl_clk ↔ phy_clk</text>
+
+            <!-- Title -->
+            <text x="190" y="355" text-anchor="middle" font-size="7.5" fill="#5a8a9f" font-family="monospace">DDR3 Controller Architecture · ASIC · 400 MHz</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PROJECT 2: HBM3 VIP ─── -->
+    <div class="project-card reveal">
+      <div class="project-inner">
+        <div class="project-diagram" style="border-left:none; border-right: 1px solid var(--border); padding:16px; min-height:480px;">
+          <!-- HBM3 Confidential Notice -->
+          <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;
+               min-height:280px;border:1.5px dashed #9b59ff44;border-radius:12px;
+               background:rgba(155,89,255,0.04);padding:32px 24px;text-align:center;">
+            <div style="font-size:2.8rem;margin-bottom:16px;">🔒</div>
+            <div style="font-size:1rem;font-weight:700;color:#9b59ff;letter-spacing:0.08em;margin-bottom:10px;">
+              ARCHITECTURE CONFIDENTIAL
+            </div>
+            <div style="font-size:0.82rem;color:#8899aa;line-height:1.7;max-width:280px;">
+              HBM3 UVM VIP developed under NDA at Sevya Multimedia Technologies.<br>
+              Internal architecture is proprietary and not publicly disclosed.
+            </div>
+            <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center;">
+              <span style="font-size:0.72rem;padding:4px 10px;border-radius:20px;
+                    background:rgba(155,89,255,0.12);color:#9b59ff;border:1px solid #9b59ff33;">
+                16-Channel JEDEC HBM3
+              </span>
+              <span style="font-size:0.72rem;padding:4px 10px;border-radius:20px;
+                    background:rgba(0,212,255,0.08);color:#00d4ff;border:1px solid #00d4ff33;">
+                IEEE-1500 Agent
+              </span>
+              <span style="font-size:0.72rem;padding:4px 10px;border-radius:20px;
+                    background:rgba(0,255,136,0.08);color:#00ff88;border:1px solid #00ff8833;">
+                RAL + Virtual Sequencer
+              </span>
+            </div>
+          </div>
+        </div>
+        <div class="project-content">
+          <span class="project-badge badge-professional">Self-Developed · Team Lead</span>
+          <h3 class="project-name">HBM3 UVM Verification IP</h3>
+          <p class="project-subtitle">JEDEC HBM3 · 16 Independent Channels · RAL · IEEE-1500 · DBI/ECC/Parity</p>
+          <p class="project-desc">
+            A fully self-developed HBM3 UVM VIP that I architected and implemented from scratch,
+            leading a 5-member team. The environment instantiates <strong>16 independent channel agents</strong>
+            (each with driver, monitor, sequencer, and scoreboard), a <strong>global agent</strong>,
+            an <strong>IEEE-1500 boundary-scan agent</strong>, and a <strong>virtual sequencer</strong>
+            that coordinates all channels simultaneously.
+          </p>
+          <p class="project-desc">
+            The unique <strong>FSM + Shared Memory synchroniser</strong> enforces JEDEC
+            command-to-command timing between the channel monitor and channel driver across
+            all 16 channels. The interface models true HBM3 bidirectional buses:
+            DQ[16][63:0], DBI[16][7:0], ECC/SEV, DPAR, APAR with tri-state direction control.
+            Clock generation implements the JEDEC PLL ÷2 relationship: CK = WDQS/2.
+          </p>
+          <p class="project-desc">
+            Covers 30+ command sequences (ACT, WR/WRA, RD/RDA, PREPB/PREAB, REFAB/REFPB,
+            RFMAB/RFMPB, SRE/SRX, PDE/PDX, NOP/CNOP/RNOP, MRS) and 25+ test scenarios
+            including seamless/non-seamless burst, power-down retention, self-refresh,
+            DBI+parity, ECC, tFAW compliance, and per-bank refresh.
+          </p>
+          <div class="project-tech-stack">
+            <span class="tech-chip">SystemVerilog + UVM</span>
+            <span class="tech-chip">HBM3 JEDEC</span>
+            <span class="tech-chip">16 Channel Agents</span>
+            <span class="tech-chip">FSM+Shared Memory</span>
+            <span class="tech-chip">IEEE-1500</span>
+            <span class="tech-chip">RAL Block</span>
+            <span class="tech-chip">DBI / ECC / Parity</span>
+            <span class="tech-chip">Virtual Sequencer</span>
+            <span class="tech-chip">30+ Sequences</span>
+            <span class="tech-chip">Team Lead (5)</span>
+          </div>
+          <div class="project-links">
+            <a class="plink" href="https://github.com/ChaitanyaNagisetty5" target="_blank">
+              <svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>
+              GitHub — ChaitanyaNagisetty5
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── PROJECT 3: AXI3 UVM ─── -->
+    <div class="project-card reveal">
+      <div class="project-inner">
+        <div class="project-content">
+          <span class="project-badge badge-course">Independent Project · Self-Developed</span>
+          <h3 class="project-name">AXI3 UVM Testbench</h3>
+          <p class="project-subtitle">Single Master · Single Slave · Full 5-Channel AXI3 Coverage</p>
+          <p class="project-desc">
+            A complete UVM-based verification environment for the AXI3 protocol — covering all
+            five channels: Write Address (AW), Write Data (W), Write Response (B), Read Address
+            (AR), and Read Data (R). Implements out-of-order and overlapping transaction modes
+            via plusargs, constrained-random stimulus, functional coverage groups, and
+            SVA protocol assertions.
+          </p>
+          <p class="project-desc">
+            Architecture includes: layered sequences (base → write-only → read-only →
+            write-then-read → parallel), master/slave agents with active/passive modes,
+            scoreboard with in-order and out-of-order checking, coverage collector, and
+            assertion module connected directly to the interface clocking block.
+          </p>
+          <div class="project-tech-stack">
+            <span class="tech-chip">SystemVerilog</span>
+            <span class="tech-chip">UVM</span>
+            <span class="tech-chip">AXI3 Protocol</span>
+            <span class="tech-chip">SVA Assertions</span>
+            <span class="tech-chip">Functional Coverage</span>
+            <span class="tech-chip">Scoreboard</span>
+            <span class="tech-chip">QuestaSim</span>
+            <span class="tech-chip">EDA Playground</span>
+          </div>
+          <div class="project-links">
+            <a class="plink" href="https://www.edaplayground.com/x/XUum" target="_blank">
+              ▶ EDA Playground
+            </a>
+          </div>
+        </div>
+        <div class="project-diagram">
+          <!-- AXI UVM Architecture SVG -->
+          <svg viewBox="0 0 340 360" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <text x="170" y="16" text-anchor="middle" font-size="9" fill="#00d4ff" font-family="monospace" font-weight="bold">AXI3 UVM TESTBENCH</text>
+
+            <!-- Test layer -->
+            <rect x="100" y="24" width="140" height="28" rx="3" fill="#0a1a24" stroke="#9b59ff" stroke-width="1.2"/>
+            <text x="170" y="42" text-anchor="middle" font-size="8" fill="#9b59ff" font-family="monospace" font-weight="bold">TEST / VIRTUAL SEQ</text>
+
+            <!-- ENV box -->
+            <rect x="40" y="66" width="260" height="180" rx="6" fill="rgba(0,212,255,0.02)" stroke="#00d4ff" stroke-width="1" stroke-dasharray="4 2"/>
+            <text x="58" y="82" font-size="7" fill="#00d4ff" font-family="monospace">TOP ENV</text>
+
+            <!-- Master Agent -->
+            <rect x="52" y="90" width="100" height="70" rx="4" fill="#051824" stroke="#00ff88" stroke-width="1"/>
+            <text x="102" y="106" text-anchor="middle" font-size="7.5" fill="#00ff88" font-family="monospace" font-weight="bold">MASTER AGENT</text>
+            <rect x="62" y="112" width="80" height="16" rx="2" fill="#020c14" stroke="rgba(0,255,136,0.3)"/>
+            <text x="102" y="124" text-anchor="middle" font-size="6.5" fill="#5a8a9f" font-family="monospace">Sequencer</text>
+            <rect x="62" y="132" width="80" height="16" rx="2" fill="#020c14" stroke="rgba(0,255,136,0.3)"/>
+            <text x="102" y="144" text-anchor="middle" font-size="6.5" fill="#5a8a9f" font-family="monospace">Driver</text>
+
+            <!-- Slave Agent -->
+            <rect x="188" y="90" width="100" height="70" rx="4" fill="#051824" stroke="#ff8c00" stroke-width="1"/>
+            <text x="238" y="106" text-anchor="middle" font-size="7.5" fill="#ff8c00" font-family="monospace" font-weight="bold">SLAVE AGENT</text>
+            <rect x="198" y="112" width="80" height="16" rx="2" fill="#020c14" stroke="rgba(255,140,0,0.3)"/>
+            <text x="238" y="124" text-anchor="middle" font-size="6.5" fill="#5a8a9f" font-family="monospace">Responder</text>
+            <rect x="198" y="132" width="80" height="16" rx="2" fill="#020c14" stroke="rgba(255,140,0,0.3)"/>
+            <text x="238" y="144" text-anchor="middle" font-size="6.5" fill="#5a8a9f" font-family="monospace">Monitor</text>
+
+            <!-- Monitor (top-level) -->
+            <rect x="52" y="172" width="100" height="28" rx="3" fill="#051824" stroke="#00d4ff" stroke-width="1"/>
+            <text x="102" y="190" text-anchor="middle" font-size="7.5" fill="#00d4ff" font-family="monospace">MONITOR</text>
+
+            <!-- Scoreboard + Coverage -->
+            <rect x="160" y="172" width="128" height="28" rx="3" fill="#051824" stroke="#9b59ff" stroke-width="1"/>
+            <text x="224" y="186" text-anchor="middle" font-size="7" fill="#9b59ff" font-family="monospace">SCOREBOARD · COV</text>
+            <text x="224" y="196" text-anchor="middle" font-size="6.5" fill="#5a8a9f" font-family="monospace">In/Out-of-Order check</text>
+
+            <!-- AXI Interface box -->
+            <rect x="80" y="260" width="180" height="55" rx="4" fill="#0a1a24" stroke="#00d4ff" stroke-width="1.5"/>
+            <text x="170" y="278" text-anchor="middle" font-size="8" fill="#00d4ff" font-family="monospace" font-weight="bold">AXI3 INTERFACE</text>
+            <!-- 5 channel labels -->
+            <text x="90" y="296" font-size="6" fill="#00ff88" font-family="monospace">AW</text>
+            <text x="115" y="296" font-size="6" fill="#00ff88" font-family="monospace">W</text>
+            <text x="136" y="296" font-size="6" fill="#ff8c00" font-family="monospace">B</text>
+            <text x="155" y="296" font-size="6" fill="#9b59ff" font-family="monospace">AR</text>
+            <text x="182" y="296" font-size="6" fill="#9b59ff" font-family="monospace">R</text>
+            <text x="212" y="296" font-size="6" fill="#ff3860" font-family="monospace">clkblk</text>
+
+            <!-- Assertion module -->
+            <rect x="8" y="260" width="65" height="55" rx="4" fill="#051824" stroke="#ff3860" stroke-width="1"/>
+            <text x="40" y="278" text-anchor="middle" font-size="7" fill="#ff3860" font-family="monospace" font-weight="bold">SVA</text>
+            <text x="40" y="292" text-anchor="middle" font-size="6.5" fill="#5a8a9f" font-family="monospace">ASSERT</text>
+            <text x="40" y="305" text-anchor="middle" font-size="6" fill="#5a8a9f" font-family="monospace">Protocol</text>
+            <text x="40" y="315" text-anchor="middle" font-size="6" fill="#5a8a9f" font-family="monospace">Checker</text>
+            <line x1="73" y1="287" x2="80" y2="287" stroke="#ff3860" stroke-width="0.8"/>
+
+            <!-- Connections -->
+            <line x1="170" y1="52" x2="170" y2="64" stroke="#9b59ff" stroke-width="1" marker-end="url(#arr)"/>
+            <line x1="102" y1="162" x2="102" y2="170" stroke="#00ff88" stroke-width="1"/>
+            <line x1="238" y1="162" x2="238" y2="200" stroke="#ff8c00" stroke-width="0.8" stroke-dasharray="2 2"/>
+            <line x1="102" y1="200" x2="170" y2="258" stroke="#00d4ff" stroke-width="1" marker-end="url(#arr)"/>
+            <line x1="224" y1="200" x2="210" y2="258" stroke="#9b59ff" stroke-width="0.8" stroke-dasharray="2 2"/>
+
+            <!-- Data flow animation -->
+            <circle r="2.5" fill="#00ff88">
+              <animateMotion dur="2.5s" repeatCount="indefinite"
+                path="M 102 52 L 102 90 L 102 162 L 102 200 L 170 258"/>
+            </circle>
+            <circle r="2.5" fill="#ff8c00">
+              <animateMotion dur="2.5s" begin="1.2s" repeatCount="indefinite"
+                path="M 238 258 L 238 200 L 238 162 L 238 90 L 170 52"/>
+            </circle>
+
+            <text x="170" y="352" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">AXI3 Single Master–Slave · UVM · QuestaSim</text>
+          </svg>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /container -->
+</section>
+
+<!-- ════════════════════ EXPERIENCE ════════════════════ -->
+<section id="experience">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">Career History</p>
+      <h2 class="section-title">Experience</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="timeline">
+
+      <div class="tl-item reveal">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <div class="tl-period">DEC 2025 – PRESENT</div>
+          <div class="tl-role">Design Verification Engineer — DDR5 SDRAM</div>
+          <div class="tl-company">Micron Technology, Hyderabad (via Sevya Multimedia)</div>
+          <ul class="tl-points">
+            <li>Running TAV simulations on DDR5 SDRAM full chip — real gate delays from standard-cell library injected to expose timing violations.</li>
+            <li>Initiating GLS on post-synthesis DDR5 netlist; zero-delay and SDF back-annotation on Write/Read data paths.</li>
+            <li>Validating DDR5 commands (ACT, READ, WRITE, PRE, REF, MRS) against JEDEC timing parameters at worst-case PVT.</li>
+          </ul>
+          <div class="tl-tags">
+            <span class="tl-tag">DDR5 TAV</span><span class="tl-tag">GLS</span><span class="tl-tag">SDF</span><span class="tl-tag">JEDEC</span><span class="tl-tag">Micron</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="tl-dot green"></div>
+        <div class="tl-body">
+          <div class="tl-period">FEB 2025 – NOV 2025</div>
+          <div class="tl-role">Senior Design Engineer — HBM3 Verification</div>
+          <div class="tl-company">Sevya Multimedia Pvt. Ltd., Hyderabad</div>
+          <ul class="tl-points">
+            <li>Led 5-member team; developed HBM3 UVM VIP for 16-channel JEDEC HBM3 specification.</li>
+            <li>Authored full Test Plan; implemented seamless/non-seamless burst, power-down, refresh sequences.</li>
+            <li>FSM + shared-memory synchroniser between monitor and driver; SVA protocol checkers.</li>
+          </ul>
+          <div class="tl-tags">
+            <span class="tl-tag">HBM3</span><span class="tl-tag">UVM VIP</span><span class="tl-tag">SVA</span><span class="tl-tag">Team Lead</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="tl-dot purple"></div>
+        <div class="tl-body">
+          <div class="tl-period">NOV 2023 – JUN 2024</div>
+          <div class="tl-role">Associate Analyst (CAE) — Packet Buffer IP Verification</div>
+          <div class="tl-company">Tech Mahindra Cerium System (Client: Intel Technologies)</div>
+          <ul class="tl-points">
+            <li>Built UVM testbench for Packet Buffer IP; 50,000-packet regression suite; 95% issue-resolution rate.</li>
+            <li>Debugged Ingress/Egress FIFO failures; 15 targeted PDCP test cases across uplink/downlink.</li>
+            <li>Re-architected SV → UVM framework; reduced debug turnaround by 30%.</li>
+          </ul>
+          <div class="tl-tags">
+            <span class="tl-tag">UVM</span><span class="tl-tag">Packet Buffer</span><span class="tl-tag">Intel</span><span class="tl-tag">P4 Code</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="tl-dot purple"></div>
+        <div class="tl-body">
+          <div class="tl-period">APR 2023 – AUG 2023</div>
+          <div class="tl-role">Project Associate — OpenTitan SOC Verification</div>
+          <div class="tl-company">CISMA Consultants Pvt. Ltd. (Client: BellMount Computing)</div>
+          <ul class="tl-points">
+            <li>Simulated OpenTitan SOC with Verilator + FuseSoC; 98% error-free 32-bit memory tests.</li>
+            <li>Implemented TileLink → AXI4 bridge; 25% protocol throughput improvement.</li>
+            <li>Formal Verification on Asynchronous FIFO 5.0 — exhaustive safety + liveness proofs.</li>
+          </ul>
+          <div class="tl-tags">
+            <span class="tl-tag">OpenTitan</span><span class="tl-tag">TileLink→AXI4</span><span class="tl-tag">Formal V&V</span><span class="tl-tag">Verilator</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="tl-item reveal">
+        <div class="tl-dot"></div>
+        <div class="tl-body">
+          <div class="tl-period">FEB 2022 – MAR 2023</div>
+          <div class="tl-role">Verification Engineer — AHB2APB Bridge</div>
+          <div class="tl-company">Tech Mahindra Cerium System, Visakhapatnam</div>
+          <ul class="tl-points">
+            <li>Established AHB-to-APB bridge verification environment; burst-mode and single-transfer scenarios.</li>
+          </ul>
+          <div class="tl-tags"><span class="tl-tag">AHB</span><span class="tl-tag">APB</span><span class="tl-tag">Bridge V&V</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ AI / LLM VERIFICATION LAB ════════════════════ -->
+<section id="ailab">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">Research & Development</p>
+      <h2 class="section-title">AI · LLM Verification Lab</h2>
+      <div class="section-line"></div>
+      <p style="color:var(--text-dim);margin-top:1rem;font-size:0.88rem;max-width:620px;margin-left:auto;margin-right:auto;">
+        Exploring how Large Language Models accelerate hardware verification — from auto-generating SVA properties
+        and CDC waivers to synthesising UVM coverage bins and full test plans from RTL specifications.
+      </p>
+    </div>
+
+    <div style="text-align:center;" class="reveal">
+      <div class="ai-badge"><div class="ai-pulse"></div>LLM INFERENCE ENGINE · ACTIVE · claude-sonnet-4-6</div>
+    </div>
+
+    <div class="reveal">
+      <div class="ai-tabs">
+        <button class="ai-tab ai-active" onclick="setAiTab(0,this)">SVA Properties</button>
+        <button class="ai-tab" onclick="setAiTab(1,this)">CDC Waivers</button>
+        <button class="ai-tab" onclick="setAiTab(2,this)">Coverage Bins</button>
+        <button class="ai-tab" onclick="setAiTab(3,this)">Test Plan</button>
+      </div>
+      <div class="ai-body">
+        <div class="ai-left">
+          <div class="ai-panel-lbl">// User Prompt</div>
+          <div class="ai-prompt" id="aiPromptBox">
+            <span class="role">ENGINEER</span>
+            <span id="aiPromptText"></span>
+          </div>
+          <button class="ai-run-btn" onclick="runAi()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            Run LLM Inference
+          </button>
+          <div class="ai-think" id="aiThink">
+            <div class="tdots"><span></span><span></span><span></span></div>
+            <span>Model reasoning...</span>
+          </div>
+          <div class="ai-kpis">
+            <div class="ai-kpi"><div class="ai-kpi-n" id="aiTokCount">0</div><div class="ai-kpi-l">Tokens</div></div>
+            <div class="ai-kpi"><div class="ai-kpi-n" id="aiLatency">—</div><div class="ai-kpi-l">Latency</div></div>
+            <div class="ai-kpi"><div class="ai-kpi-n" id="aiConfidence">—</div><div class="ai-kpi-l">Confidence</div></div>
+          </div>
+        </div>
+        <div class="ai-right">
+          <div class="ai-panel-lbl" style="display:flex;align-items:center;gap:8px;">
+            // LLM Output
+            <span style="font-size:0.58rem;color:var(--green);letter-spacing:1px;" id="aiStatusTag">READY</span>
+          </div>
+          <div class="ai-output" id="aiOutputBox"><span style="color:#2a4a5a;">// Select a tab and click Run LLM Inference↑</span><div class="ai-cursor-blink"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Research metrics row -->
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-top:40px;" class="reveal">
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--purple);">4<span>×</span></div>
+        <div class="stat-label">Faster CDC waiver generation vs manual review</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--cyan);">94<span>%</span></div>
+        <div class="stat-label">SVA property accuracy on first LLM pass</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--green);">200<span>+</span></div>
+        <div class="stat-label">Coverage bins auto-generated for DDR3 FSMs</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-num" style="color:var(--orange);">30<span>min</span></div>
+        <div class="stat-label">Full UVM test plan synthesis from RTL spec</div>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- ════════════════════ PROJECT STATUS + REPORTS ════════════════════ -->
+<section id="status" style="background: rgba(0,0,0,0.3);">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">DDR3 ASIC Controller</p>
+      <h2 class="section-title">Verification Status & Reports</h2>
+      <div class="section-line"></div>
+      <p style="color:var(--text-dim); margin-top:1rem; font-size:0.9rem;">
+        Synthesis complete · Lint &amp; CDC closure achieved · UVM testbench in active development
+      </p>
+    </div>
+
+    <!-- ── TAPEOUT VERDICT BANNER ── -->
+    <div class="reveal" style="
+      background: linear-gradient(135deg, rgba(0,255,136,0.06), rgba(0,212,255,0.06));
+      border: 1px solid rgba(0,255,136,0.4);
+      border-radius: 12px; padding: 24px 32px;
+      display: flex; align-items: center; gap: 24px;
+      margin-bottom: 48px; flex-wrap: wrap;">
+      <div style="font-size:2.5rem;">✅</div>
+      <div style="flex:1; min-width:200px;">
+        <div style="font-family:var(--ff); font-size:1.1rem; font-weight:700; color:var(--green); letter-spacing:3px;">VERDICT: TAPEOUT-READY</div>
+        <div style="font-size:0.82rem; color:var(--text-dim); margin-top:4px; font-family:var(--ff);">
+          DDR3 VIP Master Flow v3 · 2026-03-01 · Top: <span style="color:var(--cyan)">ddr3_controller_top_enhanced</span> · Target: <span style="color:var(--cyan)">xcku3p-ffva676-1-e</span>
+        </div>
+      </div>
+      <div style="display:flex; gap:16px; flex-wrap:wrap;">
+        <div style="text-align:center;">
+          <div style="font-family:var(--ff); font-size:1.4rem; font-weight:800; color:var(--cyan);">99<span style="font-size:0.8rem;">/99</span></div>
+          <div style="font-size:0.65rem; color:var(--text-dim); letter-spacing:1px;">FILES</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--ff); font-size:1.4rem; font-weight:800; color:var(--green);">0</div>
+          <div style="font-size:0.65rem; color:var(--text-dim); letter-spacing:1px;">PARSE ERRORS</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--ff); font-size:1.4rem; font-weight:800; color:var(--green);">PASS</div>
+          <div style="font-size:0.65rem; color:var(--text-dim); letter-spacing:1px;">SYNTHESIS</div>
+        </div>
+        <div style="text-align:center;">
+          <div style="font-family:var(--ff); font-size:1.4rem; font-weight:800; color:var(--green);">PASS</div>
+          <div style="font-size:0.65rem; color:var(--text-dim); letter-spacing:1px;">RTL ELAB</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── STATUS TRACKER GRID ── -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px; margin-bottom:48px;" class="reveal">
+
+      <!-- Completed milestones -->
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:28px;">
+        <div style="font-family:var(--ff); font-size:0.75rem; letter-spacing:3px; color:var(--green); margin-bottom:18px; text-transform:uppercase;">✅ Completed</div>
+        <div class="status-list">
+          <div class="sl-item done">RTL Design — 51 source files, 8 packages, 99 total</div>
+          <div class="sl-item done">Vivado Synthesis — xcku3p · 400 MHz target</div>
+          <div class="sl-item done">Lint Closure — 2,768 raw violations → <strong style="color:var(--green)">0 residual</strong></div>
+          <div class="sl-item done">CDC Closure — 5,992 raw crossings → <strong style="color:var(--green)">0 residual</strong></div>
+          <div class="sl-item done">SDC Constraints — I/O delays, multi-cycle, false paths</div>
+          <div class="sl-item done">UPF — Multi-voltage domain (AXI / Ctrl / PHY)</div>
+          <div class="sl-item done">CDC Synchronisers — ASYNC_REG on all sync chains</div>
+          <div class="sl-item done">Cadence RTL Compiler — NanGate45 synthesis flow</div>
+          <div class="sl-item done">Post-Synthesis GLS — functional equivalence verified</div>
+          <div class="sl-item done">ATPG test-pattern generation — in progress</div>
+        </div>
+      </div>
+
+      <!-- In-progress / upcoming -->
+      <div style="background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:28px;">
+        <div style="font-family:var(--ff); font-size:0.75rem; letter-spacing:3px; color:var(--cyan); margin-bottom:18px; text-transform:uppercase;">🔄 Active &amp; Planned</div>
+        <div class="status-list">
+          <div class="sl-item active">UVM Testbench — Developing full coverage environment</div>
+          <div class="sl-item active">SVA Protocol Checkers — AXI4 + DDR3 command bus</div>
+          <div class="sl-item active">Functional Coverage — Write / Read / Refresh / Init paths</div>
+          <div class="sl-item active">Constrained Random — Address / burst / ODT scenarios</div>
+          <div class="sl-item pending">RISC-V RV32I Core Integration — AXI4 master→slave mapping</div>
+          <div class="sl-item pending">Custom Memory IP — SRAM/DRAM subsystem connection</div>
+          <div class="sl-item pending">Full SoC — CPU + DDR3 + Memory bring-up simulation</div>
+          <div class="sl-item pending">SoC-level UVM environment — end-to-end traffic</div>
+          <div class="sl-item pending">Physical Design — P&amp;R, DRC, LVS (Innovus)</div>
+          <div class="sl-item pending">Timing Closure — Synopsys DC → Innovus signoff</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── REPORT CARDS ── -->
+    <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:18px;" class="reveal">
+
+      <!-- Lint Report Card -->
+      <div class="report-card" onclick="toggleReport('lint-detail')">
+        <div class="rcard-header">
+          <span style="font-size:1.6rem;">🔍</span>
+          <div>
+            <div class="rcard-title">Lint Report</div>
+            <div class="rcard-tool">Vivado report_methodology · Mar 2026</div>
+          </div>
+          <span class="rcard-verdict pass">CLEAN</span>
+        </div>
+        <div class="rcard-stats">
+          <div class="rs"><span class="rs-num cyan">2768</span><span class="rs-label">Raw Checks</span></div>
+          <div class="rs"><span class="rs-num green">0</span><span class="rs-label">Residual</span></div>
+          <div class="rs"><span class="rs-num orange">208</span><span class="rs-label">HPDR Waived*</span></div>
+        </div>
+        <div class="rcard-note">*HPDR-1/2: FPGA INOUT direction checks — structurally inapplicable to TSMC ASIC VIP flow</div>
+        <div id="lint-detail" class="rcard-terminal" style="display:none;">
+          <div class="term-line cyan">// report_methodology · ddr3_controller_top_enhanced</div>
+          <div class="term-line">Checks found   : 208</div>
+          <div class="term-line">Checks waived  : 2560</div>
+          <div class="term-line green">Residual        : 0  ← CLEAN</div>
+          <div class="term-line dim">HPDR-1 Warning : 72  (port pin dir inconsistency @ DQ bidir)</div>
+          <div class="term-line dim">HPDR-2 Warning : 136 (INOUT inconsistency @ DQ/DQS hierarchy)</div>
+          <div class="term-line dim">Root cause     : Vivado FPGA INOUT model vs ASIC tri-state pad</div>
+          <div class="term-line orange">All 208 waived — ASIC target uses dedicated TSMC IO cells</div>
+        </div>
+        <div class="rcard-expand">▼ Details</div>
+        <a class="rcard-dl" href="report_lint.rpt" download>⬇ Download .rpt</a>
+      </div>
+
+      <!-- CDC Report Card -->
+      <div class="report-card" onclick="toggleReport('cdc-detail')">
+        <div class="rcard-header">
+          <span style="font-size:1.6rem;">🔀</span>
+          <div>
+            <div class="rcard-title">CDC Report</div>
+            <div class="rcard-tool">Vivado report_cdc · Mar 2026</div>
+          </div>
+          <span class="rcard-verdict pass">CLEAN</span>
+        </div>
+        <div class="rcard-stats">
+          <div class="rs"><span class="rs-num cyan">5992</span><span class="rs-label">Raw Crossings</span></div>
+          <div class="rs"><span class="rs-num green">0</span><span class="rs-label">Residual</span></div>
+          <div class="rs"><span class="rs-num green">9</span><span class="rs-label">CDC-3/9 ✓ ASYNC_REG</span></div>
+        </div>
+        <div class="rcard-note">All crossing domains: CLK_AXI ↔ CLK_CTRL ↔ CLK_PHY ↔ CLK_FAST</div>
+        <div id="cdc-detail" class="rcard-terminal" style="display:none;">
+          <div class="term-line cyan">// report_cdc · ddr3_controller_top_enhanced</div>
+          <div class="term-line green">CDC-3  Info  3   1-bit synchronized with ASYNC_REG</div>
+          <div class="term-line green">CDC-9  Info  6   Async reset synchronized with ASYNC_REG</div>
+          <div class="term-line dim">Waived endpoints:</div>
+          <div class="term-line dim">  CDC-1  : 5249 (unknown — constrained via set_clock_groups)</div>
+          <div class="term-line dim">  CDC-6  :   44 (multi-bit MCP — constrained)</div>
+          <div class="term-line dim">  CDC-7  :  201 (reset sync — ASYNC_REG on sync_chain)</div>
+          <div class="term-line dim">  CDC-8  :    1 (missing ASYNC_REG — fixed in phy_top)</div>
+          <div class="term-line dim">  CDC-15 :  522 (clock enable — set_input_delay on AXI ports)</div>
+          <div class="term-line orange">Residual CDC violations: 0 ← TAPEOUT CLEAN</div>
+        </div>
+        <div class="rcard-expand">▼ Details</div>
+        <a class="rcard-dl" href="report_cdc.rpt" download>⬇ Download .rpt</a>
+      </div>
+
+      <!-- Utilization Card -->
+      <div class="report-card" onclick="toggleReport('util-detail')">
+        <div class="rcard-header">
+          <span style="font-size:1.6rem;">📊</span>
+          <div>
+            <div class="rcard-title">Utilization</div>
+            <div class="rcard-tool">Vivado report_utilization · Mar 2026</div>
+          </div>
+          <span class="rcard-verdict info">FULL CHIP</span>
+        </div>
+        <div class="rcard-stats">
+          <div class="rs"><span class="rs-num cyan">8,787</span><span class="rs-label">Total LUTs</span></div>
+          <div class="rs"><span class="rs-num purple">14,052</span><span class="rs-label">Flip-Flops</span></div>
+          <div class="rs"><span class="rs-num orange">2,745</span><span class="rs-label">PHY LUTs</span></div>
+        </div>
+        <div class="rcard-note">PHY: 4,432 FFs · CMD Queue: 917 FFs · Init FSM: 208 FFs</div>
+        <div id="util-detail" class="rcard-terminal" style="display:none;">
+          <div class="term-line cyan">// Utilization by Hierarchy (top-level summary)</div>
+          <div class="term-line">ddr3_controller_top_enhanced  LUTs:  8787  FFs: 14052</div>
+          <div class="term-line dim">  u_phy              (ddr3_phy_top)          LUTs:  2745  FFs:  4432</div>
+          <div class="term-line dim">  u_cmd_queue_mgr    (ddr3_cmd_queue_manager) LUTs:   411  FFs:   917</div>
+          <div class="term-line dim">    u_write_queue                             LUTs:   166  FFs:   445</div>
+          <div class="term-line dim">    u_read_queue                              LUTs:   162  FFs:   429</div>
+          <div class="term-line dim">  u_init_config_top  (ddr3_init_config_top)   LUTs:   575  FFs:   208</div>
+          <div class="term-line dim">  u_user_interface   (ddr3_user_interface)    LUTs:   ~900 FFs:  ~2100</div>
+          <div class="term-line dim">  u_scheduler        (ddr3_command_scheduler) LUTs:   ~800 FFs:  ~1800</div>
+          <div class="term-line dim">  u_ecc_ctrl         (ddr3_ecc_controller)    LUTs:     1  FFs:    66</div>
+          <div class="term-line dim">  RAMB36/18/URAM/DSP : 0 each (pure LUT/FF design)</div>
+        </div>
+        <div class="rcard-expand">▼ Hierarchy</div>
+        <a class="rcard-dl" href="report_utilization.rpt" download>⬇ Download .rpt</a>
+      </div>
+
+      <!-- Timing Card -->
+      <div class="report-card" onclick="toggleReport('timing-detail')">
+        <div class="rcard-header">
+          <span style="font-size:1.6rem;">⏱</span>
+          <div>
+            <div class="rcard-title">Timing Summary</div>
+            <div class="rcard-tool">Vivado report_timing_summary · Mar 2026</div>
+          </div>
+          <span class="rcard-verdict warn">FPGA EST.</span>
+        </div>
+        <div class="rcard-stats">
+          <div class="rs"><span class="rs-num orange">-3.44ns</span><span class="rs-label">WNS (FPGA est.)</span></div>
+          <div class="rs"><span class="rs-num cyan">400</span><span class="rs-label">Target MHz</span></div>
+          <div class="rs"><span class="rs-num purple">4</span><span class="rs-label">Clock Domains</span></div>
+        </div>
+        <div class="rcard-note">FPGA estimation only — ASIC signoff via Synopsys DC + Cadence Innovus</div>
+        <div id="timing-detail" class="rcard-terminal" style="display:none;">
+          <div class="term-line cyan">// Timing Analysis · Multi-corner (Slow/Fast)</div>
+          <div class="term-line">Target frequency : 400 MHz (2.5 ns period)</div>
+          <div class="term-line orange">WNS (FPGA est.) : -3.443 ns  ← FPGA-specific slack</div>
+          <div class="term-line dim">Note: Vivado maps to FPGA IOBs with FPGA-specific delays</div>
+          <div class="term-line dim">ASIC path: Synopsys DC → mapped to TSMC 16nm std-cells</div>
+          <div class="term-line dim">          Cadence Innovus → P&R + signoff timing</div>
+          <div class="term-line dim">Clock domains verified:</div>
+          <div class="term-line dim">  CLK_AXI   (100 MHz) — AXI4 slave interface</div>
+          <div class="term-line dim">  CLK_CTRL  (200 MHz) — DDR3 controller core</div>
+          <div class="term-line dim">  CLK_PHY   (400 MHz) — OSERDES/ISERDES serialiser</div>
+          <div class="term-line dim">  CLK_FAST  (800 MHz) — DQS quadrature gen (DLL)</div>
+          <div class="term-line dim">Multi-cycle/false paths: fully constrained in SDC</div>
+        </div>
+        <div class="rcard-expand">▼ Details</div>
+        <a class="rcard-dl" href="report_timing.rpt" download>⬇ Download .rpt</a>
+      </div>
+
+      <!-- Flow Summary Card -->
+      <div class="report-card" onclick="toggleReport('flow-detail')">
+        <div class="rcard-header">
+          <span style="font-size:1.6rem;">📋</span>
+          <div>
+            <div class="rcard-title">Flow Summary</div>
+            <div class="rcard-tool">DDR3 VIP Master Flow v3 · Mar 2026</div>
+          </div>
+          <span class="rcard-verdict pass">TAPEOUT</span>
+        </div>
+        <div class="rcard-stats">
+          <div class="rs"><span class="rs-num green">99/99</span><span class="rs-label">Files OK</span></div>
+          <div class="rs"><span class="rs-num green">PASS</span><span class="rs-label">Synthesis</span></div>
+          <div class="rs"><span class="rs-num green">PASS</span><span class="rs-label">RTL Elab</span></div>
+        </div>
+        <div class="rcard-note">All checks pass · Lint residual 0 · CDC residual 0</div>
+        <div id="flow-detail" class="rcard-terminal" style="display:none;">
+          <div class="term-line cyan">DDR3 VIP Master Flow v3</div>
+          <div class="term-line">Timestamp    : 2026-03-01_21-45-46</div>
+          <div class="term-line">Top module   : ddr3_controller_top_enhanced</div>
+          <div class="term-line">Target part  : xcku3p-ffva676-1-e</div>
+          <div class="term-line green">VERDICT      : [OK]  TAPEOUT-READY</div>
+          <div class="term-line dim">Files present : 99 / 99</div>
+          <div class="term-line dim">Parse errors  : 0</div>
+          <div class="term-line dim">RTL elab      : PASS</div>
+          <div class="term-line dim">Synthesis     : PASS</div>
+          <div class="term-line green">Lint residual : 0  (raw 2768 → all waived)</div>
+          <div class="term-line green">CDC residual  : 0  (raw 5992 → all waived)</div>
+          <div class="term-line orange">TIMING WNS    : -3.443 ns (FPGA est. — ASIC by DC+Innovus)</div>
+        </div>
+        <div class="rcard-expand">▼ Raw Output</div>
+        <a class="rcard-dl" href="report_flow_summary.rpt" download>⬇ Download .rpt</a>
+      </div>
+
+    </div><!-- /report cards -->
+  </div>
+</section>
+
+<!-- Gallery section removed (confidential commercial content) -->
+
+
+    <!-- Architecture Vision SVG + description -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:40px; align-items:center;" class="reveal">
+
+      <div>
+        <div style="background:var(--bg-card); border:1px solid rgba(0,212,255,0.2); border-radius:12px; padding:30px; margin-bottom:20px;">
+          <div style="font-family:var(--ff); font-size:0.8rem; color:var(--cyan); letter-spacing:2px; margin-bottom:12px;">// THE VISION</div>
+          <p style="color:var(--text); line-height:1.8; font-size:0.95rem;">
+            Integrate an open-source <strong style="color:var(--cyan)">RISC-V RV32I processor</strong> (e.g. PicoRV32 or VexRiscV)
+            as the AXI4 master driving my DDR3 ASIC controller — creating a complete,
+            <strong style="color:var(--green)">self-verified SoC</strong>. The controller already exposes a
+            standards-compliant AXI4 slave interface, so the processor maps directly with zero glue logic.
+          </p>
+          <p style="color:var(--text-dim); line-height:1.8; font-size:0.9rem; margin-top:12px;">
+            The UVM testbench under development will grow into a full
+            <strong style="color:var(--cyan)">SoC-level verification environment</strong> — driving the RISC-V
+            instruction bus, checking DDR3 burst transactions, verifying cache-line fill/writeback,
+            and running memory BIST patterns through the complete data path to silicon-validated DRAM.
+          </p>
+        </div>
+
+        <!-- Roadmap steps -->
+        <div class="roadmap-steps">
+          <div class="rs-step done">
+            <div class="rs-dot done-dot"></div>
+            <div class="rs-body">
+              <div class="rs-title">Phase 1 — RTL + Synthesis <span class="rs-status-chip done-chip">COMPLETE</span></div>
+              <div class="rs-desc">DDR3 ASIC controller RTL complete. Synthesis PASS, Lint 0, CDC 0. GLS verified.</div>
+            </div>
+          </div>
+          <div class="rs-step active">
+            <div class="rs-dot active-dot"></div>
+            <div class="rs-body">
+              <div class="rs-title">Phase 2 — UVM Testbench <span class="rs-status-chip active-chip">IN PROGRESS</span></div>
+              <div class="rs-desc">Building UVM environment: constrained-random AXI4 traffic, SVA checkers, functional coverage for all DDR3 command sequences (INIT/WR/RD/REF/ODT).</div>
+            </div>
+          </div>
+          <div class="rs-step pending">
+            <div class="rs-dot pending-dot"></div>
+            <div class="rs-body">
+              <div class="rs-title">Phase 3 — RISC-V AXI4 Integration <span class="rs-status-chip pending-chip">PLANNED</span></div>
+              <div class="rs-desc">Connect PicoRV32 / VexRiscV AXI4 master to DDR3 controller AXI4 slave. Run RISC-V firmware through DDR3. Verify INCR/WRAP burst correctness from CPU perspective.</div>
+            </div>
+          </div>
+          <div class="rs-step pending">
+            <div class="rs-dot pending-dot"></div>
+            <div class="rs-body">
+              <div class="rs-title">Phase 4 — Custom Memory IP <span class="rs-status-chip pending-chip">PLANNED</span></div>
+              <div class="rs-desc">Design a custom SRAM scratchpad + DDR3 DRAM memory map. CPU-controlled memory arbiter. RISC-V memory-mapped I/O to peripheral registers.</div>
+            </div>
+          </div>
+          <div class="rs-step pending">
+            <div class="rs-dot pending-dot"></div>
+            <div class="rs-body">
+              <div class="rs-title">Phase 5 — Full SoC Verification + P&amp;R <span class="rs-status-chip pending-chip">PLANNED</span></div>
+              <div class="rs-desc">End-to-end SoC UVM environment. CPU→DDR3 memory test programs. Cadence Innovus physical design, DRC/LVS, and TSMC 16nm timing signoff.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RISC-V SoC Architecture SVG -->
+      <div style="background:#020c14; border:1px solid var(--border); border-radius:12px; padding:24px; display:flex; align-items:center; justify-content:center;">
+        <svg viewBox="0 0 320 440" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <marker id="arrR" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+              <path d="M 0 0 L 5 2.5 L 0 5 Z" fill="#9b59ff"/>
+            </marker>
+            <marker id="arrRc" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+              <path d="M 0 0 L 5 2.5 L 0 5 Z" fill="#00d4ff"/>
+            </marker>
+            <marker id="arrRg" markerWidth="5" markerHeight="5" refX="4" refY="2.5" orient="auto">
+              <path d="M 0 0 L 5 2.5 L 0 5 Z" fill="#00ff88"/>
+            </marker>
+          </defs>
+
+          <text x="160" y="14" text-anchor="middle" font-size="8" fill="#9b59ff" font-family="monospace" font-weight="bold">PLANNED: RISC-V + DDR3 SoC</text>
+
+          <!-- RISC-V CPU -->
+          <rect x="60" y="20" width="200" height="54" rx="5" fill="#0a1a24" stroke="#9b59ff" stroke-width="1.5"/>
+          <text x="160" y="38" text-anchor="middle" font-size="8.5" fill="#9b59ff" font-family="monospace" font-weight="bold">RISC-V RV32I Core</text>
+          <text x="160" y="52" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">PicoRV32 / VexRiscV</text>
+          <text x="160" y="65" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">AXI4 Master · Inst + Data bus</text>
+
+          <!-- AXI4 Bus -->
+          <rect x="40" y="96" width="240" height="24" rx="3" fill="#050d14" stroke="#00d4ff" stroke-width="1.2"/>
+          <text x="160" y="112" text-anchor="middle" font-size="7.5" fill="#00d4ff" font-family="monospace" font-weight="bold">AXI4 Interconnect (32-bit, 100 MHz)</text>
+          <line x1="160" y1="74" x2="160" y2="94" stroke="#9b59ff" stroke-width="1.2" marker-end="url(#arrR)"/>
+
+          <!-- DDR3 Controller (MY PROJECT) -->
+          <rect x="40" y="138" width="240" height="62" rx="5" fill="#0a1a24" stroke="#00d4ff" stroke-width="2"/>
+          <text x="160" y="155" text-anchor="middle" font-size="8.5" fill="#00d4ff" font-family="monospace" font-weight="bold">DDR3 ASIC Controller ★</text>
+          <text x="160" y="168" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">AXI4 Slave · PHY OSERDES/ISERDES</text>
+          <text x="160" y="181" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">Write Level · Read Cal · Refresh · ZQ · MRS</text>
+          <text x="160" y="192" text-anchor="middle" font-size="6.5" fill="#00ff88" font-family="monospace">[ SYNTHESIS DONE · CDC/LINT CLEAN ]</text>
+          <line x1="160" y1="120" x2="160" y2="136" stroke="#00d4ff" stroke-width="1.2" marker-end="url(#arrRc)"/>
+
+          <!-- PHY layer -->
+          <rect x="60" y="220" width="200" height="30" rx="3" fill="#050d14" stroke="#9b59ff" stroke-width="1"/>
+          <text x="160" y="235" text-anchor="middle" font-size="7" fill="#9b59ff" font-family="monospace">PHY · DQS diff pair · OSERDES · ISERDES</text>
+          <text x="160" y="246" text-anchor="middle" font-size="6.5" fill="#5a8a9f" font-family="monospace">IDELAY · DLL 800MHz · Write/Read training</text>
+          <line x1="160" y1="200" x2="160" y2="218" stroke="#00d4ff" stroke-width="1" marker-end="url(#arrRc)"/>
+
+          <!-- Custom Memory -->
+          <rect x="10" y="270" width="130" height="36" rx="4" fill="#0a1a24" stroke="#ff8c00" stroke-width="1"/>
+          <text x="75" y="284" text-anchor="middle" font-size="7" fill="#ff8c00" font-family="monospace" font-weight="bold">Custom Memory IP</text>
+          <text x="75" y="297" text-anchor="middle" font-size="6.5" fill="#5a8a9f" font-family="monospace">SRAM Scratchpad + MMIO</text>
+
+          <!-- DDR3 DRAM -->
+          <rect x="150" y="270" width="160" height="36" rx="4" fill="#0a1a24" stroke="#00ff88" stroke-width="1.5"/>
+          <text x="230" y="285" text-anchor="middle" font-size="8" fill="#00ff88" font-family="monospace" font-weight="bold">DDR3 SDRAM</text>
+          <text x="230" y="298" text-anchor="middle" font-size="6.5" fill="#5a8a9f" font-family="monospace">DQ/DQS · 1066 Mbps · JEDEC</text>
+
+          <!-- PHY → DDR3 -->
+          <line x1="200" y1="250" x2="230" y2="268" stroke="#00ff88" stroke-width="1.2" marker-end="url(#arrRg)"/>
+          <!-- AXI → Custom Mem -->
+          <line x1="100" y1="120" x2="75"  y2="268" stroke="#ff8c00" stroke-width="0.8" stroke-dasharray="3 2"/>
+
+          <!-- UVM VIP bracket -->
+          <rect x="4" y="138" width="30" height="168" rx="3" fill="rgba(0,212,255,0.04)" stroke="#00d4ff" stroke-width="0.7" stroke-dasharray="3 2"/>
+          <text x="19" y="200" text-anchor="middle" font-size="6" fill="#00d4ff" font-family="monospace" transform="rotate(-90,19,200)">UVM TESTBENCH (IN PROGRESS)</text>
+
+          <!-- Animated CPU→DDR3 burst -->
+          <circle r="3" fill="#9b59ff">
+            <animateMotion dur="2.5s" repeatCount="indefinite"
+              path="M 160 74 L 160 94 L 160 120 L 160 136 L 160 200 L 200 250 L 230 268"/>
+          </circle>
+          <!-- Return read path -->
+          <circle r="2.5" fill="#00ff88" opacity="0.9">
+            <animateMotion dur="2.5s" begin="1.2s" repeatCount="indefinite"
+              path="M 230 268 L 200 250 L 160 200 L 160 136 L 160 120 L 160 94 L 160 74"/>
+          </circle>
+
+          <!-- Legend chips -->
+          <rect x="10" y="326" width="90" height="16" rx="3" fill="rgba(155,89,255,0.1)" stroke="#9b59ff" stroke-width="0.7"/>
+          <text x="55" y="338" text-anchor="middle" font-size="6.5" fill="#9b59ff" font-family="monospace">RISC-V (Planned)</text>
+
+          <rect x="108" y="326" width="90" height="16" rx="3" fill="rgba(0,212,255,0.1)" stroke="#00d4ff" stroke-width="0.7"/>
+          <text x="153" y="338" text-anchor="middle" font-size="6.5" fill="#00d4ff" font-family="monospace">DDR3 Ctrl (Done ✓)</text>
+
+          <rect x="206" y="326" width="100" height="16" rx="3" fill="rgba(0,255,136,0.1)" stroke="#00ff88" stroke-width="0.7"/>
+          <text x="256" y="338" text-anchor="middle" font-size="6.5" fill="#00ff88" font-family="monospace">DDR3 DRAM (Target)</text>
+
+          <text x="160" y="430" text-anchor="middle" font-size="7" fill="#5a8a9f" font-family="monospace">RISC-V SoC · AXI4 · DDR3 400MHz · ASIC Flow</text>
+        </svg>
+      </div>
+    </div><!-- /grid -->
+  </div>
+</section>
+
+
+<!-- ════════════════════ CONTACT ════════════════════ -->
+<section id="contact">
+  <div class="container">
+    <div class="section-header reveal">
+      <p class="section-label">Get In Touch</p>
+      <h2 class="section-title">Open to Opportunities</h2>
+      <div class="section-line"></div>
+    </div>
+    <div class="contact-cta reveal">
+      <p>
+        I am actively seeking roles in <strong>Memory Verification</strong>, <strong>ASIC Verification</strong>,
+        and <strong>DV Engineering</strong> — particularly positions working with DDR5/DDR3/HBM3,
+        UVM-based testbenches, or GLS/TAV at leading semiconductor companies.
+      </p>
+      <div class="contact-links">
+        <a class="contact-chip" href="mailto:chaitanyanagi123@gmail.com">
+          📧 chaitanyanagi123@gmail.com
+        </a>
+        <a class="contact-chip" href="https://www.linkedin.com/in/chaitanya-nagisetty-87176919a" target="_blank">
+          💼 LinkedIn
+        </a>
+        <a class="contact-chip" href="https://github.com/ChaitanyaNagisetty5" target="_blank">
+          🐙 GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ════════════════════ FOOTER ════════════════════ -->
+<footer>
+  <p>// NAGISETTY CHAITANYA · DATASTROBE · Senior Design Engineer — Memory & ASIC Verification</p>
+  <p style="margin-top:8px; opacity:0.5;">Visakhapatnam, India · 2024–2026</p>
+</footer>
+
+<!-- ════════════════════ SCRIPTS ════════════════════ -->
+<script>
+// ─── Circuit Canvas Background ───
+(function() {
+  const canvas = document.getElementById('circuit-canvas');
+  const ctx = canvas.getContext('2d');
+  let W, H, nodes = [], lines = [], packets = [];
+
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+    init();
+  }
+
+  function rand(a, b) { return a + Math.random() * (b - a); }
+  function randInt(a, b) { return Math.floor(rand(a, b)); }
+
+  function init() {
+    nodes = [];
+    lines = [];
+    packets = [];
+    const count = Math.floor(W * H / 22000);
+    for (let i = 0; i < count; i++) {
+      nodes.push({ x: rand(0, W), y: rand(0, H), r: rand(1.5, 3.5) });
+    }
+    // Connect nearby nodes
+    for (let i = 0; i < nodes.length; i++) {
+      for (let j = i + 1; j < nodes.length; j++) {
+        const dx = nodes[i].x - nodes[j].x;
+        const dy = nodes[i].y - nodes[j].y;
+        const dist = Math.sqrt(dx*dx + dy*dy);
+        if (dist < 180) {
+          lines.push({ a: i, b: j, alpha: 0.5 - dist / 360 });
+        }
+      }
+    }
+    // Create data packets that travel along edges
+    for (let i = 0; i < Math.min(lines.length, 30); i++) {
+      spawnPacket();
+    }
+  }
+
+  function spawnPacket() {
+    if (!lines.length) return;
+    const edge = lines[randInt(0, lines.length)];
+    packets.push({
+      edge, t: 0, speed: rand(0.002, 0.006),
+      color: Math.random() < 0.5 ? '#00d4ff' : (Math.random() < 0.5 ? '#00ff88' : '#9b59ff')
+    });
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, W, H);
+    // Lines
+    ctx.lineWidth = 0.6;
+    for (const l of lines) {
+      const a = nodes[l.a], b = nodes[l.b];
+      ctx.beginPath();
+      ctx.moveTo(a.x, a.y);
+      ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = `rgba(0,212,255,${l.alpha * 0.4})`;
+      ctx.stroke();
+    }
+    // Nodes
+    for (const n of nodes) {
+      ctx.beginPath();
+      ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(0,212,255,0.5)';
+      ctx.fill();
+    }
+    // Packets (data pulses traveling along edges)
+    for (let i = packets.length - 1; i >= 0; i--) {
+      const p = packets[i];
+      const a = nodes[p.edge.a], b = nodes[p.edge.b];
+      const x = a.x + (b.x - a.x) * p.t;
+      const y = a.y + (b.y - a.y) * p.t;
+      ctx.beginPath();
+      ctx.arc(x, y, 2.5, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+      p.t += p.speed;
+      if (p.t > 1) {
+        packets.splice(i, 1);
+        spawnPacket();
+      }
+    }
+    requestAnimationFrame(draw);
+  }
+
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
+})();
+
+// ─── Scroll Reveal ───
+(function() {
+  const els = document.querySelectorAll('.reveal');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        io.unobserve(e.target);
+      }
+    });
+  }, { threshold: 0.12 });
+  els.forEach(el => io.observe(el));
+})();
+
+// ─── Typing effect for hero title ───
+(function() {
+  const el = document.querySelector('.hero-eyebrow');
+  if (!el) return;
+  const text = el.textContent;
+  el.textContent = '';
+  let i = 0;
+  function type() {
+    if (i < text.length) {
+      el.textContent += text[i++];
+      setTimeout(type, 28);
+    }
+  }
+  setTimeout(type, 400);
+})();
+
+// ─── Report card toggle ───
+function toggleReport(id) {
+  const el = document.getElementById(id);
+  if (!el) return;
+  const isOpen = el.style.display !== 'none';
+  el.style.display = isOpen ? 'none' : 'block';
+  const card = el.closest('.report-card');
+  if (card) {
+    const exp = card.querySelector('.rcard-expand');
+    if (exp) exp.textContent = isOpen ? '▼ Details' : '▲ Collapse';
+  }
+}
+
+// ─── Gallery filter ───
+function filterGallery(cat, btn) {
+  document.querySelectorAll('.gtab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('#galleryGrid .gcard').forEach(card => {
+    card.style.display = (cat === 'all' || card.dataset.cat === cat) ? '' : 'none';
+  });
+}
+
+// ─── Lightbox ───
+function openLightbox(src, caption) {
+  const lb = document.getElementById('lightbox');
+  const img = document.getElementById('lb-img');
+  const cap = document.getElementById('lb-caption');
+  if (!lb || !img) return;
+  img.src = src;
+  if (cap) cap.textContent = caption || '';
+  lb.style.display = 'flex';
+}
+function closeLightbox() {
+  const lb = document.getElementById('lightbox');
+  if (lb) lb.style.display = 'none';
+}
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+
+// ─── Preloader ───
+(function(){
+  const pl = document.getElementById('preloader');
+  if (!pl) return;
+  window.addEventListener('load', function(){
+    setTimeout(function(){ pl.classList.add('hidden'); }, 2600);
+  });
+})();
+
+// ─── Silicon Journey ───
+(function(){
+  const track = document.getElementById('siliconTrack');
+  const stages = document.querySelectorAll('.silicon-stage');
+  const dots   = document.querySelectorAll('.si-dot');
+  if (!track || !stages.length) return;
+
+  function updateActive(){
+    const cx = track.scrollLeft + track.clientWidth / 2;
+    let best = 0, bestDist = Infinity;
+    stages.forEach(function(s, i){
+      const sc = s.offsetLeft + s.offsetWidth / 2;
+      const d  = Math.abs(cx - sc);
+      if (d < bestDist){ bestDist = d; best = i; }
+    });
+    stages.forEach(function(s,i){ s.classList.toggle('si-active', i === best); });
+    dots.forEach(function(d,i){ d.classList.toggle('active', i === best); });
+  }
+
+  track.addEventListener('scroll', updateActive, {passive:true});
+  updateActive();
+
+  // Drag scroll
+  let down = false, startX = 0, scrollLeft = 0;
+  track.addEventListener('mousedown', function(e){
+    down = true; startX = e.pageX - track.offsetLeft; scrollLeft = track.scrollLeft;
+    track.style.userSelect = 'none';
+  });
+  track.addEventListener('mouseleave', function(){ down = false; });
+  track.addEventListener('mouseup',    function(){ down = false; track.style.userSelect = ''; });
+  track.addEventListener('mousemove', function(e){
+    if (!down) return;
+    e.preventDefault();
+    const x = e.pageX - track.offsetLeft;
+    track.scrollLeft = scrollLeft - (x - startX) * 1.5;
+  });
+})();
+
+function scrollSilicon(idx){
+  const track  = document.getElementById('siliconTrack');
+  const stages = document.querySelectorAll('.silicon-stage');
+  if (!track || !stages[idx]) return;
+  const s = stages[idx];
+  track.scrollTo({ left: s.offsetLeft - (track.clientWidth - s.offsetWidth) / 2, behavior: 'smooth' });
+}
+
+// ─── Waveform Analyzer ───
+(function(){
+  const canvas = document.getElementById('waveCanvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  const ROW_H  = 44;
+  const ROWS   = 8;
+  const LABEL_W = 92;
+  const PLOT_W  = W - LABEL_W - 8;
+  const TOP_PAD = 28;
+
+  // Colours
+  const C = { clk:'#00d4ff', clkn:'#005a70', cs:'#ff3860', cmd:'#ff7090', addr:'#9b59ff', dqs:'#ff8c00', dq:'#00ff88', valid:'rgba(200,160,64,0.15)', bg:'#000b18', grid:'rgba(0,212,255,0.06)', label:'#5a8a9f', hi:'#00d4ff', tick:'rgba(0,212,255,0.2)' };
+
+  // Signal row definitions
+  const SIGS = [
+    { name:'CK+',    col: C.clk  },
+    { name:'CK−',    col: C.clkn },
+    { name:'CS#',    col: C.cs   },
+    { name:'CMD',    col: C.cmd  },
+    { name:'ADDR',   col: C.addr },
+    { name:'DQS',    col: C.dqs  },
+    { name:'DQ[3:0]',col: C.dq  },
+    { name:'VALID',  col: C.valid},
+  ];
+
+  // Pre-defined waveform sequences
+  // Each entry: { t: clock_edge (0..31), v: 0|1|string }
+  // 32 clock edges displayed
+  const N = 32; // total half-cycles
+
+  function buildWrite(){
+    // ACT at t=2, WR at t=6, DQS preamble at t=9.5, data burst BL8 at t=10-14
+    const w = { ckp:[], ckn:[], cs:[], cmd:[], addr:[], dqs:[], dq:[], valid:[] };
+    for(let i=0;i<N;i++){
+      w.ckp.push(i%2===0?1:0);
+      w.ckn.push(i%2===0?0:1);
+      // CS# low at clock edges 2,3 (ACT) and 6,7 (WR), else high
+      w.cs.push((i>=2&&i<=3)||(i>=6&&i<=7)?0:1);
+      // CMD: ACT at 2, WR at 6, else NOP
+      let cmd='NOP';
+      if(i===2) cmd='ACT';
+      if(i===6) cmd='WR';
+      w.cmd.push(cmd);
+      // ADDR: row at 2, col at 6, else Z
+      let a='–';
+      if(i===2) a='0x1A40';
+      if(i===6) a='0x03C0';
+      w.addr.push(a);
+      // DQS: preamble low at 9 (half-cycle before first strobe), toggle 10-17
+      let dqsv=0;
+      if(i===9) dqsv=0;           // preamble
+      else if(i>=10&&i<=17) dqsv=i%2===0?0:1;  // strobe
+      else if(i===18) dqsv=0;     // postamble
+      w.dqs.push(dqsv);
+      // DQ: valid from edge 10 to 17, 8 bits of data
+      const DATA=['0xA5','0x3C','0xFF','0x12','0x7E','0xB8','0x00','0x9D'];
+      w.dq.push(i>=10&&i<18?DATA[(i-10)%8]:'–');
+      // VALID window
+      w.valid.push(i>=10&&i<18?1:0);
+    }
+    return w;
+  }
+
+  function buildRead(){
+    const w = { ckp:[], ckn:[], cs:[], cmd:[], addr:[], dqs:[], dq:[], valid:[] };
+    for(let i=0;i<N;i++){
+      w.ckp.push(i%2===0?1:0);
+      w.ckn.push(i%2===0?0:1);
+      w.cs.push((i>=2&&i<=3)||(i>=6&&i<=7)?0:1);
+      let cmd='NOP'; if(i===2)cmd='ACT'; if(i===6)cmd='RD';
+      w.cmd.push(cmd);
+      let a='–'; if(i===2)a='0x1A40'; if(i===6)a='0x0200';
+      w.addr.push(a);
+      // tCL = 5 clocks → read latency, data comes back at edge 16
+      let dqsv=0;
+      if(i===15) dqsv=0;
+      else if(i>=16&&i<=23) dqsv=i%2===0?0:1;
+      else if(i===24) dqsv=0;
+      w.dqs.push(dqsv);
+      const DATA=['0x55','0xAA','0x0F','0xF0','0x12','0xED','0x34','0xCB'];
+      w.dq.push(i>=16&&i<24?DATA[(i-16)%8]:'–');
+      w.valid.push(i>=16&&i<24?1:0);
+    }
+    return w;
+  }
+
+  let mode = 'write';
+  let waveData = buildWrite();
+  let cursor   = 0;
+  let playing  = true;
+  let animId   = null;
+  const SPEED  = 60; // ms per half-cycle
+
+  function drawGrid(){
+    ctx.fillStyle = C.bg;
+    ctx.fillRect(0, 0, W, H);
+    // Header row
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.fillRect(0, 0, W, TOP_PAD);
+    ctx.fillStyle = C.label;
+    ctx.font = '10px Courier New';
+    ctx.textAlign = 'center';
+    for(let i=0;i<N;i++){
+      const x = LABEL_W + (i / N) * PLOT_W;
+      if(i%2===0){
+        ctx.fillStyle = C.tick;
+        ctx.fillRect(x, 0, 0.5, H);
+        ctx.fillStyle = C.label;
+        ctx.fillText('t+'+(i/2), x+2, 16);
+      }
+    }
+    // Signal labels + row backgrounds
+    SIGS.forEach(function(sig, r){
+      const y = TOP_PAD + r * ROW_H;
+      ctx.fillStyle = r%2===0 ? 'rgba(0,212,255,0.015)' : 'rgba(0,0,0,0.2)';
+      ctx.fillRect(0, y, W, ROW_H);
+      ctx.strokeStyle = C.grid;
+      ctx.lineWidth = 0.5;
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke();
+      // Label
+      ctx.fillStyle = sig.col;
+      ctx.font = 'bold 10px Courier New';
+      ctx.textAlign = 'right';
+      ctx.fillText(sig.name, LABEL_W - 8, y + ROW_H/2 + 4);
+    });
+  }
+
+  function drawSignal(rowIdx, valArr, col, isAnalog){
+    const y0 = TOP_PAD + rowIdx * ROW_H;
+    const pad = 8;
+    const hi  = y0 + pad;
+    const lo  = y0 + ROW_H - pad;
+    const mid = (hi + lo) / 2;
+
+    ctx.strokeStyle = col;
+    ctx.lineWidth = 1.5;
+    ctx.shadowColor = col;
+    ctx.shadowBlur = 4;
+    ctx.beginPath();
+
+    let drawn = false;
+    for(let i=0;i<=Math.min(cursor, N-1);i++){
+      const x = LABEL_W + (i / N) * PLOT_W;
+      const nx = LABEL_W + ((i+1) / N) * PLOT_W;
+      const v  = valArr[i];
+
+      if(typeof v === 'string' && v !== '–'){
+        // Bus value — fill region with dim color
+        ctx.shadowBlur = 0;
+        ctx.fillStyle = col.replace(')', ',0.1)').replace('rgb','rgba');
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 1;
+        // Draw X-shape transition if prev was different
+        if(i > 0 && valArr[i-1] !== v){
+          ctx.strokeStyle = col;
+          ctx.beginPath(); ctx.moveTo(x, hi); ctx.lineTo(x+4, lo); ctx.moveTo(x, lo); ctx.lineTo(x+4, hi); ctx.stroke();
+        }
+        const endX = LABEL_W + (Math.min(cursor+0.5, N-0.5) / N) * PLOT_W;
+        ctx.fillRect(x+4, hi, Math.min(nx, endX)-x-4, lo-hi);
+        ctx.beginPath();
+        ctx.moveTo(x+4, hi); ctx.lineTo(Math.min(nx, endX), hi);
+        ctx.moveTo(x+4, lo); ctx.lineTo(Math.min(nx, endX), lo);
+        ctx.stroke();
+        // Label
+        if(nx - x > 28){
+          ctx.fillStyle = col;
+          ctx.font = '9px Courier New';
+          ctx.textAlign = 'center';
+          ctx.shadowBlur = 0;
+          ctx.fillText(v, (x + Math.min(nx, endX))/2, mid + 3);
+        }
+        drawn = false; continue;
+      }
+
+      const yv = (v===1) ? hi : lo;
+      if(!drawn){ ctx.moveTo(x, yv); drawn=true; }
+      else {
+        const prev = valArr[Math.max(i-1,0)];
+        const yp   = (prev===1)?hi:lo;
+        if(yp !== yv) ctx.lineTo(x, yv);
+        else ctx.lineTo(x, yv);
+      }
+      // Horizontal to next
+      if(i < cursor) ctx.lineTo(Math.min(nx, LABEL_W + cursor/N * PLOT_W), yv);
+    }
+    ctx.stroke();
+    ctx.shadowBlur = 0;
+
+    // VALID window fill
+    if(rowIdx === 7){
+      ctx.fillStyle = C.valid;
+      for(let i=0;i<=Math.min(cursor,N-1);i++){
+        if(valArr[i]===1){
+          const x = LABEL_W + (i/N)*PLOT_W;
+          const nx2 = LABEL_W + ((i+1)/N)*PLOT_W;
+          ctx.fillRect(x, y0, nx2-x, ROW_H);
+        }
+      }
+    }
+  }
+
+  function drawCursor(){
+    const x = LABEL_W + (cursor/N)*PLOT_W;
+    ctx.strokeStyle = 'rgba(255,255,255,0.25)';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([4,3]);
+    ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, H); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+
+  function render(){
+    if(playing) cursor = Math.min(cursor + 1, N);
+    drawGrid();
+    drawSignal(0, waveData.ckp,   C.clk,    false);
+    drawSignal(1, waveData.ckn,   '#004a5a', false);
+    drawSignal(2, waveData.cs,    C.cs,     false);
+    drawSignal(3, waveData.cmd,   C.cmd,    false);
+    drawSignal(4, waveData.addr,  C.addr,   false);
+    drawSignal(5, waveData.dqs,   C.dqs,    false);
+    drawSignal(6, waveData.dq,    C.dq,     false);
+    drawSignal(7, waveData.valid, C.valid,  false);
+    drawCursor();
+    if(cursor >= N && playing){
+      playing = false;
+      clearInterval(animId);
+      animId = null;
+      var btn = document.getElementById('wbtn-play');
+      if(btn) btn.textContent = '▶ PLAY';
+    }
+  }
+
+  function start(){
+    if(animId){ clearInterval(animId); animId = null; }
+    // Draw one frame immediately, then tick every SPEED ms
+    render();
+    animId = setInterval(render, SPEED);
+  }
+
+  window.setWaveMode = function(m, btn){
+    mode = m;
+    waveData = m==='write'?buildWrite():buildRead();
+    cursor = 0; playing = true;
+    document.getElementById('waveModeLabel').textContent = m==='write'?'DDR3 WRITE':'DDR3 READ';
+    document.getElementById('wbtn-play').textContent = '⏸ PAUSE';
+    document.querySelectorAll('.wave-btn').forEach(function(b){ b.classList.remove('wactive'); });
+    btn.classList.add('wactive');
+    start();
+  };
+  window.toggleWave = function(){
+    playing = !playing;
+    document.getElementById('wbtn-play').textContent = playing ? '⏸ PAUSE' : '▶ PLAY';
+    if(playing){ start(); } else { if(animId){ clearInterval(animId); animId=null; } render(); }
+  };
+  window.resetWave = function(){
+    cursor = 0; playing = true;
+    document.getElementById('wbtn-play').textContent = '⏸ PAUSE';
+    start();
+  };
+
+  // Auto-start when section scrolls into view
+  const io = new IntersectionObserver(function(entries){
+    entries.forEach(function(e){ if(e.isIntersecting && cursor===0) start(); });
+  }, { threshold: 0.3 });
+  io.observe(document.getElementById('waveforms'));
+})();
+
+// ─── AI Lab ───
+(function(){
+  const TABS = [
+    {
+      prompt: `Generate comprehensive SVA protocol checker assertions for the AXI4 AWVALID/AWREADY handshake on my DDR3 controller's AXI4 slave interface. Include: handshake stability, no-withdraw after valid, response ordering.`,
+      output: `// ─────────────────────────────────────────────
+// SVA: AXI4 Write-Address Handshake Checks
+// Generated for: ddr3_controller_top_enhanced
+// Interface: s_axi (AXI4 Slave)
+// ─────────────────────────────────────────────
+
+module ddr3_axi_assertions #(
+  parameter AW = 32, DW = 64, IW = 4
+)(
+  input logic         aclk, aresetn,
+  // AW channel
+  input logic         s_axi_awvalid, s_axi_awready,
+  input logic [AW-1:0] s_axi_awaddr,
+  input logic [7:0]   s_axi_awlen,
+  input logic [2:0]   s_axi_awsize, s_axi_awburst,
+  // W channel
+  input logic         s_axi_wvalid, s_axi_wready, s_axi_wlast,
+  // B channel
+  input logic         s_axi_bvalid, s_axi_bready,
+  input logic [1:0]   s_axi_bresp
+);
+
+  // ── Handshake: AWVALID must not deassert before AWREADY ──
+  property p_aw_stable;
+    @(posedge aclk) disable iff (!aresetn)
+    s_axi_awvalid && !s_axi_awready
+    |=> s_axi_awvalid;
+  endproperty
+  AW_STABLE: assert property (p_aw_stable)
+    else $error("AXI4 VIOLATION: AWVALID withdrawn before AWREADY");
+
+  // ── AWADDR must be stable while AWVALID held ──
+  property p_aw_addr_stable;
+    @(posedge aclk) disable iff (!aresetn)
+    s_axi_awvalid && !s_axi_awready
+    |=> $stable(s_axi_awaddr) && $stable(s_axi_awlen);
+  endproperty
+  AW_ADDR_STABLE: assert property (p_aw_addr_stable)
+    else $error("AXI4 VIOLATION: AWADDR changed while AWVALID high");
+
+  // ── WLAST must align with AWLEN burst count ──
+  property p_wlast_on_last_beat;
+    int cnt;
+    @(posedge aclk) disable iff (!aresetn)
+    (s_axi_awvalid && s_axi_awready, cnt = s_axi_awlen)
+    ##1 (s_axi_wvalid && s_axi_wready [*1:$], cnt == 0)
+    |-> s_axi_wlast;
+  endproperty
+  WLAST_CHECK: assert property (p_wlast_on_last_beat);
+
+  // ── BRESP must be OKAY or EXOKAY (no SLVERR/DECERR) ──
+  property p_bresp_ok;
+    @(posedge aclk) disable iff (!aresetn)
+    s_axi_bvalid |-> s_axi_bresp inside {2'b00, 2'b01};
+  endproperty
+  BRESP_OK: assert property (p_bresp_ok)
+    else $error("AXI4 ERROR: Unexpected BRESP = %0b", s_axi_bresp);
+
+  // ── Coverage ──
+  covergroup cg_axi_aw @(posedge aclk);
+    cp_awburst: coverpoint s_axi_awburst { bins FIXED=0; bins INCR=1; bins WRAP=2; }
+    cp_awlen:   coverpoint s_axi_awlen   { bins single=0; bins burst4=3; bins burst8=7; bins burst16=15; }
+    cp_awsize:  coverpoint s_axi_awsize  { bins b8=0; bins b16=1; bins b32=2; bins b64=3; }
+    cx_bstxlen: cross cp_awburst, cp_awlen;
+  endgroup
+  cg_axi_aw cg_inst = new();
+
+endmodule`,
+      tokens: 624, latency: '1.2s', confidence: '97%'
+    },
+    {
+      prompt: `Generate Vivado CDC waiver TCL commands for gray-code FIFO pointer synchronisers between AXI clock domain (100MHz) and CTRL clock domain (200MHz) in my DDR3 controller. The FIFOs use ASYNC_REG-annotated 2-FF synchronisers with proper gray encoding.`,
+      output: `# ─────────────────────────────────────────────
+# CDC Waivers: Gray-code FIFO synchronisers
+# Generated for: ddr3_controller_top_enhanced
+# Crossing: CLK_AXI (100MHz) ↔ CLK_CTRL (200MHz)
+# ─────────────────────────────────────────────
+
+# ── Waiver W-CDC-6: Multi-bit gray pointer ──
+# Gray-encoded pointers are safe to cross without
+# set_bus_skew if only 1 bit changes per cycle.
+create_waiver -type CDC -id {CDC-6} \
+  -from [get_pins -hierarchical -filter {NAME =~ */u_write_fifo/wr_ptr_gray_reg[*]/C}] \
+  -to   [get_pins -hierarchical -filter {NAME =~ */u_write_fifo/wr_ptr_gray_sync_rd_reg[*]/D}] \
+  -description "Gray-coded wr_ptr: only 1 bit transitions per clock — CDC-6 safe" \
+  -tags {gray_fifo axi_to_ctrl}
+
+create_waiver -type CDC -id {CDC-6} \
+  -from [get_pins -hierarchical -filter {NAME =~ */u_write_fifo/rd_ptr_gray_reg[*]/C}] \
+  -to   [get_pins -hierarchical -filter {NAME =~ */u_write_fifo/rd_ptr_gray_sync_wr_reg[*]/D}] \
+  -description "Gray-coded rd_ptr: only 1 bit transitions per clock — CDC-6 safe" \
+  -tags {gray_fifo ctrl_to_axi}
+
+# ── Waiver W-CDC-8: ASYNC_REG on sync chain ──
+# Confirm ASYNC_REG attribute is present on all
+# synchroniser FF pairs in ddr3_reset_sync.
+create_waiver -type CDC -id {CDC-8} \
+  -of_objects [get_cells -hierarchical -filter \
+    {NAME =~ */u_rst_sync_axi/sync_chain_reg[*] || \
+     NAME =~ */u_rst_sync_ctrl/sync_chain_reg[*]}] \
+  -description "ASYNC_REG=TRUE set on 2-FF reset sync chains" \
+  -tags {reset_sync cdc8_resolved}
+
+# ── Verify waivers applied ──
+report_cdc -details -waived \
+  -file reports/cdc_gray_waivers_check.rpt
+puts "CDC waivers applied — check report for coverage"`,
+      tokens: 412, latency: '0.9s', confidence: '99%'
+    },
+    {
+      prompt: `Auto-generate SystemVerilog UVM functional coverage bins for the DDR3 REFRESH controller. Cover: tREFI compliance, deferred refresh counting (up to 8 deferred), urgent refresh, and the interaction between refresh and active bank operations.`,
+      output: `// ─────────────────────────────────────────────
+// UVM Functional Coverage: DDR3 Refresh Ctrl
+// Generated for: ddr3_refresh_controller
+// JEDEC spec: DDR3-1600 tREFI = 7.8µs
+// ─────────────────────────────────────────────
+
+covergroup cg_ddr3_refresh
+  @(posedge ctrl_clk iff rst_ctrl_n);
+
+  // ── Refresh request type ──
+  cp_req_type: coverpoint refresh_urgent {
+    bins NORMAL  = {1'b0};
+    bins URGENT  = {1'b1};
+  }
+
+  // ── Deferred refresh count bins (JEDEC: max 8) ──
+  cp_deferred: coverpoint pending_refs {
+    bins NONE      = {0};
+    bins LOW       = {[1:2]};
+    bins MEDIUM    = {[3:5]};
+    bins HIGH      = {[6:7]};
+    bins MAX_DEFER = {8};   // JEDEC limit — must not exceed
+    illegal_bins OVER_MAX = {[9:$]};
+  }
+
+  // ── Refresh grant latency (cycles from req to grant) ──
+  cp_grant_latency: coverpoint grant_latency {
+    bins IMMEDIATE   = {[0:2]};
+    bins SHORT_DEFER = {[3:8]};
+    bins LONG_DEFER  = {[9:16]};
+    bins TIMEOUT     = {[17:$]};
+  }
+
+  // ── State at time of grant ──
+  cp_state: coverpoint state {
+    bins IDLE      = {IDLE};
+    bins WAIT_ACK  = {WAIT_ACK};
+    bins REFRESHING= {REFRESHING};
+    bins DEFERRED  = {DEFERRED};
+  }
+
+  // ── Cross: urgency × deferred depth ──
+  cx_urg_defer: cross cp_req_type, cp_deferred {
+    // Must see urgent request with max deferred
+    bins CRIT = binsof(cp_req_type.URGENT) &&
+                binsof(cp_deferred.MAX_DEFER);
+  }
+
+  // ── Cross: state × grant latency ──
+  cx_state_lat: cross cp_state, cp_grant_latency;
+
+  // ── tREFI interval compliance ──
+  cp_trefi_ok: coverpoint trefi_violation {
+    bins COMPLIANT   = {1'b0};
+    bins VIOLATION   = {1'b1};  // Must never be hit!
+    illegal_bins BAD = binsof(cp_trefi_ok.VIOLATION);
+  }
+
+endgroup : cg_ddr3_refresh
+
+// Instantiate in UVM scoreboard
+cg_ddr3_refresh refresh_cov_inst = new();`,
+      tokens: 398, latency: '0.8s', confidence: '96%'
+    },
+    {
+      prompt: `Generate a structured UVM test plan for verifying the DDR3 Write Leveling FSM. Include: normal training pass, DQS tap boundary conditions, timeout handling, and re-training after power cycle. Each test should have stimulus, expected behaviour, and pass/fail criteria.`,
+      output: `# ─────────────────────────────────────────────
+# UVM Test Plan: DDR3 Write Leveling FSM
+# Module: ddr3_phy_top › u_write_leveling
+# FSM: WL_IDLE → WL_INIT → WL_TAP_SEARCH →
+#      WL_EDGE_DETECT → WL_DONE / WL_ERROR
+# ─────────────────────────────────────────────
+
+TEST-WL-001: Nominal Write Leveling — Single Pass
+  Stimulus:
+    - Assert wl_start; drive DQS feedback delayed
+      by 3 taps on lane 0, 5 taps on lane 1
+  Expected:
+    - FSM traverses IDLE→INIT→TAP_SEARCH→EDGE_DETECT→DONE
+    - wl_done asserts within 256 tCK training window
+    - tap_result[0] = 3, tap_result[1] = 5
+  Pass/Fail: wl_done==1 && wl_error==0
+
+TEST-WL-002: Tap Search — Boundary at Tap 0 (Min)
+  Stimulus:
+    - DQS feedback arrives with 0 tap delay (edge case)
+  Expected:
+    - FSM detects transition at tap 0
+    - tap_result = 0, wl_done asserts
+  Pass/Fail: tap_result==0 && no timeout
+
+TEST-WL-003: Tap Search — Boundary at Max Tap (63)
+  Stimulus:
+    - DQS feedback delayed by full ODELAY range (63 taps)
+  Expected:
+    - FSM iterates all 64 taps, finds edge at 63
+  Pass/Fail: tap_result==63 && wl_error==0
+
+TEST-WL-004: Training Timeout — No DQS Edge Found
+  Stimulus:
+    - DQS feedback held constant (no edge) for 256+ tCK
+  Expected:
+    - FSM transitions to WL_ERROR after timeout
+    - wl_error asserts, wl_done stays low
+    - Error captured in status register
+  Pass/Fail: wl_error==1 && wl_done==0
+
+TEST-WL-005: Re-training After Power Cycle
+  Stimulus:
+    - Assert rst_phy_n (PHY reset)
+    - Release reset, re-assert wl_start
+    - Different tap delay than first training pass
+  Expected:
+    - FSM resets to WL_IDLE cleanly
+    - New tap result reflects new delay value
+  Pass/Fail: Second wl_done==1 && tap_result updated
+
+TEST-WL-006: Write Leveling During Refresh Storm
+  Stimulus:
+    - Trigger simultaneous refresh_urgent during training
+  Expected:
+    - Training FSM pauses (or arbiter defers refresh)
+    - Training resumes and completes correctly
+  Pass/Fail: wl_done asserts, no missed tREFI
+
+# Coverage targets: 100% FSM state, 100% tap bins,
+# all error conditions hit at least once.`,
+      tokens: 511, latency: '1.1s', confidence: '95%'
+    }
+  ];
+
+  let currentTab = 0;
+  let typeTimer  = null;
+
+  function setPrompt(idx){
+    const pt = document.getElementById('aiPromptText');
+    if(pt) pt.textContent = TABS[idx].prompt;
+  }
+
+  window.setAiTab = function(idx, btn){
+    currentTab = idx;
+    document.querySelectorAll('.ai-tab').forEach(function(b){ b.classList.remove('ai-active'); });
+    btn.classList.add('ai-active');
+    // Reset output
+    const out = document.getElementById('aiOutputBox');
+    if(out) out.innerHTML = '<span style="color:#2a4a5a;">// Click Run LLM Inference to generate output</span><div class="ai-cursor-blink"></div>';
+    document.getElementById('aiTokCount').textContent = '0';
+    document.getElementById('aiLatency').textContent  = '—';
+    document.getElementById('aiConfidence').textContent = '—';
+    document.getElementById('aiStatusTag').textContent = 'READY';
+    setPrompt(idx);
+    if(typeTimer) clearInterval(typeTimer);
+  };
+
+  window.runAi = function(){
+    const tab = TABS[currentTab];
+    const out = document.getElementById('aiOutputBox');
+    const thk = document.getElementById('aiThink');
+    if(!out) return;
+    if(typeTimer) clearInterval(typeTimer);
+
+    // Show thinking
+    out.innerHTML = '';
+    thk.classList.add('show');
+    document.getElementById('aiStatusTag').textContent = 'INFERRING...';
+    document.getElementById('aiTokCount').textContent = '…';
+
+    setTimeout(function(){
+      thk.classList.remove('show');
+      document.getElementById('aiLatency').textContent = tab.latency;
+      document.getElementById('aiConfidence').textContent = tab.confidence;
+      document.getElementById('aiStatusTag').textContent = 'STREAMING';
+
+      // Typewriter effect
+      const text = tab.output;
+      let i = 0;
+      out.innerHTML = '<div class="ai-cursor-blink"></div>';
+      const cursor = out.querySelector('.ai-cursor-blink');
+
+      typeTimer = setInterval(function(){
+        if(i >= text.length){
+          clearInterval(typeTimer);
+          if(cursor) cursor.remove();
+          document.getElementById('aiStatusTag').textContent = 'DONE';
+          return;
+        }
+        // Insert chunk of 3 chars at a time for speed
+        const chunk = text.slice(i, i+3);
+        const node  = document.createTextNode(chunk);
+        out.insertBefore(node, cursor);
+        i += 3;
+        document.getElementById('aiTokCount').textContent = Math.round(i * tab.tokens / text.length);
+        out.scrollTop = out.scrollHeight;
+      }, 18);
+    }, 900);
+  };
+
+  // Init first tab prompt
+  setPrompt(0);
+})();
+
+// ─── Smooth active nav highlight ───
+(function() {
+  const sections = document.querySelectorAll('section[id]');
+  const links    = document.querySelectorAll('.nav-links a');
+  const io = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        links.forEach(l => l.style.color = '');
+        const active = document.querySelector(`.nav-links a[href="#${e.target.id}"]`);
+        if (active) active.style.color = 'var(--cyan)';
+      }
+    });
+  }, { rootMargin: '-40% 0px -55% 0px' });
+  sections.forEach(s => io.observe(s));
+})();
+</script>
+</body>
+</html>

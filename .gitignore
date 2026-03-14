@@ -1,0 +1,17 @@
+# Confidential synthesis/analysis reports
+*.rpt
+
+# Architecture images (proprietary/commercial)
+images/
+
+# Temporary scripts
+cleanup_gallery.py
+check.py
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Editor folders
+.claude/
+.vscode/
