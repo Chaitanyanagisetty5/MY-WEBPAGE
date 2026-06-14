@@ -1,0 +1,1150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DDR3 Controller — 3D RTL Silicon Visualizer</title>
+<style>
+  :root{
+    --bg:#05070f; --panel:#0d1424ee; --panel2:#101a30ee; --line:#1e2c4a;
+    --txt:#cfe0ff; --dim:#7e93bd; --acc:#4da3ff; --ok:#34d399; --warn:#fbbf24; --err:#f87171;
+    --axi:#3b82f6; --ctrl:#22c55e; --phy:#f97316; --fast:#e11d48; --dram:#a855f7;
+  }
+  *{box-sizing:border-box; margin:0; padding:0}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--bg);
+    font-family:"Segoe UI",Roboto,Helvetica,Arial,sans-serif;color:var(--txt);}
+  #scene{position:absolute;inset:0;touch-action:none}
+  canvas{display:block;touch-action:none}
+
+  /* ---------- HEADER ---------- */
+  #hdr{position:absolute;top:0;left:0;right:0;z-index:20;display:flex;align-items:center;gap:14px;
+    padding:10px 16px;background:linear-gradient(180deg,#080d1aee,#080d1a00);pointer-events:none}
+  #hdr h1{font-size:17px;font-weight:600;letter-spacing:.5px;white-space:nowrap}
+  #hdr h1 b{color:var(--acc)}
+  #hdr .sub{font-size:11px;color:var(--dim);white-space:nowrap}
+  #scenarios{display:flex;gap:6px;margin-left:14px;pointer-events:auto;flex-wrap:wrap}
+  .scn-btn{background:var(--panel);border:1px solid var(--line);color:var(--txt);font-size:12px;
+    padding:7px 13px;border-radius:8px;cursor:pointer;transition:.15s;white-space:nowrap}
+  .scn-btn:hover{border-color:var(--acc);transform:translateY(-1px)}
+  .scn-btn.active{background:#15305c;border-color:var(--acc);box-shadow:0 0 14px #4da3ff55}
+
+  /* ---------- NARRATION ---------- */
+  #narr{position:absolute;left:16px;top:74px;width:380px;z-index:15;background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:14px 16px;backdrop-filter:blur(6px)}
+  #narr .stepno{font-size:11px;color:var(--acc);letter-spacing:1px;text-transform:uppercase}
+  #narr h2{font-size:15px;margin:4px 0 6px;color:#fff}
+  #narr p{font-size:12px;line-height:1.55;color:var(--txt)}
+  #narr .hop{margin-top:8px;font-size:11px;color:var(--dim)}
+  #narr .hop b{color:var(--warn)}
+  #sigs{display:flex;flex-wrap:wrap;gap:5px;margin-top:10px}
+  .sig{font-family:Consolas,Menlo,monospace;font-size:10.5px;background:#0a1f3a;color:#8fd3ff;
+    border:1px solid #1d3a63;border-radius:5px;padding:3px 7px}
+
+  /* ---------- INFO PANEL ---------- */
+  #info{position:absolute;right:16px;top:74px;bottom:120px;width:400px;z-index:15;background:var(--panel);
+    border:1px solid var(--line);border-radius:12px;padding:0;overflow:hidden;display:flex;flex-direction:column;
+    transform:translateX(440px);transition:transform .3s;backdrop-filter:blur(6px)}
+  #info.open{transform:translateX(0)}
+  #info header{padding:13px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:10px}
+  #info header .dot{width:12px;height:12px;border-radius:3px;flex:none}
+  #info header h3{font-size:14px;flex:1}
+  #info header .file{font-size:10px;color:var(--dim);font-family:monospace}
+  #info header button{background:none;border:none;color:var(--dim);font-size:18px;cursor:pointer}
+  #info .body{padding:12px 16px;overflow-y:auto;font-size:12px;line-height:1.55}
+  #info .body::-webkit-scrollbar{width:6px}
+  #info .body::-webkit-scrollbar-thumb{background:#22345c;border-radius:3px}
+  #info h4{font-size:11px;color:var(--acc);text-transform:uppercase;letter-spacing:1px;margin:14px 0 6px}
+  #info h4:first-child{margin-top:0}
+  #info table{width:100%;border-collapse:collapse;font-size:11px}
+  #info td{padding:3px 6px;border-bottom:1px solid #16223c;vertical-align:top}
+  #info td:first-child{font-family:Consolas,monospace;color:#8fd3ff;white-space:nowrap}
+  #info ul{margin-left:16px}
+  #info li{margin:3px 0}
+  .find{border-left:3px solid;border-radius:4px;background:#0a1326;padding:6px 9px;margin:6px 0;font-size:11px}
+  .find.crit{border-color:var(--err)} .find.high{border-color:#fb923c}
+  .find.med{border-color:var(--warn)} .find.low{border-color:#60a5fa}
+  .find .tag{font-weight:700;font-size:10px;letter-spacing:.5px}
+  .find.crit .tag{color:var(--err)} .find.high .tag{color:#fb923c}
+  .find.med .tag{color:var(--warn)} .find.low .tag{color:#60a5fa}
+  .find .st{float:right;font-size:9px;padding:1px 6px;border-radius:8px}
+  .st.fixed{background:#0c2e22;color:var(--ok)} .st.open{background:#341414;color:var(--err)}
+  .fsm{font-family:Consolas,monospace;font-size:10.5px;color:#b8f0c8;background:#0a1d14;
+    border:1px solid #14402a;border-radius:5px;padding:2px 6px;display:inline-block;margin:2px 1px}
+
+  /* ---------- TRANSPORT BAR ---------- */
+  #bar{position:absolute;left:50%;transform:translateX(-50%);bottom:14px;z-index:20;width:min(880px,94vw);
+    background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:10px 18px;
+    display:flex;align-items:center;gap:14px;backdrop-filter:blur(6px)}
+  .tbtn{background:#13213d;border:1px solid var(--line);color:#fff;width:38px;height:38px;border-radius:50%;
+    font-size:15px;cursor:pointer;flex:none;display:flex;align-items:center;justify-content:center;transition:.15s}
+  .tbtn:hover{border-color:var(--acc)}
+  #timeline{flex:1;-webkit-appearance:none;height:6px;border-radius:3px;background:#16223c;cursor:pointer}
+  #timeline::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;
+    background:var(--acc);box-shadow:0 0 10px #4da3ffaa;cursor:grab}
+  .ctl{display:flex;flex-direction:column;align-items:center;gap:2px;font-size:9.5px;color:var(--dim);flex:none}
+  .ctl input[type=range]{width:90px;-webkit-appearance:none;height:4px;border-radius:2px;background:#16223c}
+  .ctl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;border-radius:50%;background:var(--warn)}
+  #spdval{color:var(--warn);font-weight:700}
+  #tlabel{font-size:11px;color:var(--dim);font-family:monospace;flex:none;min-width:86px;text-align:right}
+  .toggle{display:flex;align-items:center;gap:5px;font-size:10.5px;color:var(--dim);cursor:pointer;flex:none;user-select:none}
+  .toggle input{accent-color:var(--acc)}
+
+  /* ---------- LEGEND ---------- */
+  #legend{position:absolute;left:16px;bottom:14px;z-index:15;background:var(--panel);border:1px solid var(--line);
+    border-radius:12px;padding:10px 14px;font-size:11px;backdrop-filter:blur(6px)}
+  #legend h5{font-size:10px;color:var(--dim);text-transform:uppercase;letter-spacing:1px;margin-bottom:6px}
+  #legend .row{display:flex;align-items:center;gap:8px;margin:3px 0}
+  #legend .sw{width:11px;height:11px;border-radius:3px;flex:none}
+  #legend .hz{margin-left:auto;color:var(--dim);font-family:monospace;font-size:10px;padding-left:10px}
+
+  /* ---------- FILM BARS ---------- */
+  .filmbar{position:absolute;left:0;right:0;height:0;background:#000;z-index:18;transition:height .6s}
+  #fb-t{top:0} #fb-b{bottom:0}
+  body.film #fb-t,body.film #fb-b{height:7vh}
+
+  /* video-style subtitles */
+  #subs{position:absolute;left:50%;transform:translateX(-50%);bottom:86px;z-index:19;
+    max-width:min(900px,92vw);text-align:center;pointer-events:none}
+  #subs .l1{display:inline-block;background:#000000b8;color:#fff;font-size:clamp(15px,2vw,21px);
+    font-weight:600;padding:6px 18px;border-radius:8px;text-shadow:0 2px 6px #000}
+  #subs .l2{display:block;margin-top:6px}
+  #subs .l2 span{display:inline-block;background:#000000a0;color:#ffd966;font-size:clamp(12px,1.5vw,15px);
+    padding:4px 14px;border-radius:7px;text-shadow:0 1px 4px #000}
+  #playall{background:linear-gradient(90deg,#b91c1c,#7c2d12);border:1px solid #f87171;color:#fff;
+    font-size:12px;padding:7px 14px;border-radius:8px;cursor:pointer;white-space:nowrap}
+  #playall.on{box-shadow:0 0 16px #f8717188}
+  #langsel{background:var(--panel);border:1px solid var(--line);color:var(--txt);font-size:12px;
+    padding:6px 8px;border-radius:8px;cursor:pointer}
+  .guide-btn{background:linear-gradient(90deg,#1d4ed8,#7c3aed);color:#fff!important;font-size:12px;
+    padding:7px 14px;border-radius:8px;text-decoration:none;white-space:nowrap}
+  #hint{position:absolute;right:16px;bottom:14px;z-index:14;font-size:10px;color:var(--dim);text-align:right;line-height:1.6}
+  #hint b{color:var(--txt)}
+
+  @media(max-width:1100px){ #narr{width:300px} #info{width:330px} }
+</style>
+</head>
+<body>
+<div id="scene"></div>
+<div class="filmbar" id="fb-t"></div><div class="filmbar" id="fb-b"></div>
+
+<div id="hdr">
+  <div>
+    <h1>DDR3 <b>Controller</b> · 3D RTL Silicon Visualizer</h1>
+    <div class="sub">ddr3_controller_top_enhanced.sv — pin-to-pin transaction flow · JEDEC JESD79-3F</div>
+  </div>
+  <div id="scenarios"></div>
+  <div style="display:flex;gap:8px;align-items:center;margin-left:auto;pointer-events:auto">
+    <button id="playall" title="Play all scenarios like a movie">🎬 PLAY ALL</button>
+    <select id="langsel" title="Narration language">
+      <option value="en">EN</option><option value="hi">हिंदी</option><option value="te">తెలుగు</option>
+    </select>
+    <a class="guide-btn" href="guide.html" title="Design · CDC · DFT · Analog · Init · Verification">📚 Guide</a>
+  </div>
+</div>
+
+<div id="narr">
+  <div class="stepno" id="n-step">SCENARIO</div>
+  <h2 id="n-title">Select a scenario to begin</h2>
+  <p id="n-desc">Click a scenario above. Drag to orbit, scroll to zoom, right-drag to pan. Click any block for its full RTL detail: ports, parameters, FSM states and code-review findings.</p>
+  <div class="hop" id="n-hop"></div>
+  <div id="sigs"></div>
+</div>
+
+<div id="info">
+  <header>
+    <div class="dot" id="i-dot"></div>
+    <div style="flex:1">
+      <h3 id="i-name">Block</h3>
+      <div class="file" id="i-file"></div>
+    </div>
+    <button onclick="document.getElementById('info').classList.remove('open')">✕</button>
+  </header>
+  <div class="body" id="i-body"></div>
+</div>
+
+<div id="legend">
+  <h5>Clock Domains</h5>
+  <div class="row"><div class="sw" style="background:#3b82f6"></div>axi_aclk<span class="hz">200–300 MHz</span></div>
+  <div class="row"><div class="sw" style="background:#22c55e"></div>ctrl_clk<span class="hz">400 MHz</span></div>
+  <div class="row"><div class="sw" style="background:#f97316"></div>phy_clk / clk_0°·90°·180°·270°<span class="hz">400 MHz</span></div>
+  <div class="row"><div class="sw" style="background:#e11d48"></div>clk_fast<span class="hz">1600 MHz</span></div>
+  <div class="row"><div class="sw" style="background:#a855f7"></div>DDR3 SDRAM (DQS source-sync)<span class="hz">800 MT/s</span></div>
+</div>
+
+<div id="bar">
+  <button class="tbtn" id="b-play" title="Play / Pause">▶</button>
+  <button class="tbtn" id="b-restart" title="Restart" style="font-size:13px">⟲</button>
+  <input type="range" id="timeline" min="0" max="1000" value="0">
+  <div id="tlabel">step 0 / 0</div>
+  <div class="ctl"><input type="range" id="speed" min="10" max="300" value="100"><span>speed <span id="spdval">1.0×</span></span></div>
+  <label class="toggle"><input type="checkbox" id="cine"> 🎬 film cam</label>
+  <label class="toggle"><input type="checkbox" id="marks" checked> ⚠ review marks</label>
+</div>
+
+<div id="subs"><span class="l1" id="sub1"></span><span class="l2"><span id="sub2"></span></span></div>
+<div id="hint"><b>Drag</b> orbit · <b>Scroll</b> zoom · <b>Right-drag</b> pan<br><b>Click block</b> → RTL details &amp; review findings</div>
+
+<!-- Boot watchdog + error surface: if the 3D app fails to start (no internet
+     for the CDN, old browser, blocked WebGL) show WHY instead of a dead page -->
+<script>
+(function(){
+  window.__APP_OK = false;
+  function overlay(msg){
+    var d = document.getElementById('boot-err');
+    if(!d){
+      d = document.createElement('div'); d.id='boot-err';
+      d.style.cssText='position:fixed;inset:0;z-index:999;display:flex;align-items:center;'+
+        'justify-content:center;background:#05070fee;color:#fca5a5;font:14px/1.7 Segoe UI,Arial;'+
+        'padding:40px;text-align:center;white-space:pre-line';
+      document.body.appendChild(d);
+    }
+    d.textContent = msg;
+  }
+  window.__bootFail = overlay;
+  window.addEventListener('error', function(e){
+    if(!window.__APP_OK) overlay('⚠ 3D visualizer failed to start\n\n'+(e.message||e.type)+
+      '\n\nCheck: (1) internet connection — Three.js loads from cdn.jsdelivr.net,\n'+
+      '(2) use a recent Chrome / Edge / Firefox / Safari,\n(3) WebGL must be enabled.');
+  }, true);
+  setTimeout(function(){
+    if(!window.__APP_OK) overlay('⚠ 3D engine did not load within 12 s\n\n'+
+      'Three.js is fetched from cdn.jsdelivr.net — an internet connection is required\n'+
+      'the first time. If you are offline or the CDN is blocked, the scene cannot start.\n\n'+
+      'Also ensure your browser supports ES modules + import maps\n'+
+      '(Chrome/Edge ≥ 89, Firefox ≥ 108, Safari ≥ 16.4 — or any browser with the\n'+
+      'es-module-shims polyfill, which this page loads automatically).');
+  }, 12000);
+})();
+</script>
+<!-- import-map polyfill for older browsers (Safari < 16.4, Firefox < 108) -->
+<script async src="https://ga.jspm.io/npm:es-module-shims@1.10.0/dist/es-module-shims.js"></script>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+}}
+</script>
+
+<script type="module">
+import * as THREE from 'three';
+import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
+
+/* roundRect polyfill — older browsers throw inside label rendering otherwise */
+if (!CanvasRenderingContext2D.prototype.roundRect){
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r){
+    if (typeof r === 'number') r = [r,r,r,r];
+    this.moveTo(x+r[0],y);
+    this.arcTo(x+w,y,x+w,y+h,r[1]); this.arcTo(x+w,y+h,x,y+h,r[2]);
+    this.arcTo(x,y+h,x,y,r[3]);     this.arcTo(x,y,x+w,y,r[0]);
+    this.closePath(); return this;
+  };
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   1. DESIGN DATA — extracted from the RTL
+   ════════════════════════════════════════════════════════════════════════ */
+const DOM = {
+  axi : {c:0x3b82f6, hz:2.5,  name:'axi_aclk'},
+  ctrl: {c:0x22c55e, hz:4.0,  name:'ctrl_clk'},
+  phy : {c:0xf97316, hz:4.0,  name:'phy_clk'},
+  fast: {c:0xe11d48, hz:16.0, name:'clk_fast'},
+  dram: {c:0xa855f7, hz:8.0,  name:'DDR3'}
+};
+
+/* id, label, sub-label, domain, x, z, w(idth x), d(epth z), h(eight) */
+const BLOCKS = [
+ ['axi_port','AXI4 PORT','5 channels · 64-bit','axi', -57,  0, 4,28,4.2],
+ ['axi_slave','ddr3_axi4_slave','AXI protocol engine','axi', -49,-17, 8,9,3],
+ ['addr_dec','ddr3_address_decoder','addr → {bank,row,col}','axi', -49,-4, 8,8,3],
+ ['txn_trk','ddr3_txn_id_tracker','outstanding IDs ×16','axi', -49, 8, 8,8,3],
+ ['wr_fifo','ddr3_write_fifo','async ×16 · CDC','axi', -38,-18, 9,9,4],
+ ['rd_fifo','ddr3_read_fifo','async ×16 · CDC','axi', -38, 14, 9,9,4],
+ ['rd_q','RD QUEUE','ddr3_read_cmd_queue ×16','ctrl', -26,-22, 7,5.5,3],
+ ['wr_q','WR QUEUE','ddr3_write_cmd_queue ×16','ctrl', -26,-15, 7,5.5,3],
+ ['ref_q','REF QUEUE','ddr3_refresh_queue ×4','ctrl', -26,-8, 7,5.5,3],
+ ['refresh','ddr3_refresh_controller','tREFI 7.8µs · tRFC 208cy','ctrl', -26, 2, 8,7,3],
+ ['init','INIT &amp; MODE REGS','MRS · ZQ · CKE · power-up','ctrl', -26, 13, 9,8,3],
+ ['ecc','ddr3_ecc_controller','SECDED 64+8 · scrubber','ctrl', -26, 24, 9,7,3],
+ ['frfcfs','ddr3_fr_fcfs_reorder','page-hit lookahead ×4','ctrl', -15,-22, 8,6,3],
+ ['arbiter','ddr3_priority_arbiter','REF&gt;WR&gt;RD + aging','ctrl', -15,-14, 8,6,3],
+ ['page_pol','ddr3_page_policy','OPEN/CLOSE/ADAPTIVE','ctrl', -5.5,-22, 8,6,3],
+ ['bank_trk','ddr3_bank_state_tracker','8 banks · tFAW window','ctrl', -5.5,-14, 8,6,3],
+ ['cmdgen','ddr3_command_generator','ACT→RD/WR→PRE FSM','ctrl', -10,-6.5, 12,5.5,3],
+ ['timing','ddr3_timing_controller','JEDEC per-bank timers','ctrl', -10, 2.5, 12,6,3.6],
+ ['wracc','WRITE BURST ACCUM','8×64b beats → 512b BL8','ctrl', -13, 24, 9,7,3],
+ ['cmdenc','COMMAND ENCODER','enum → RAS/CAS/WE + A10','phy', 7,-19, 8,7,3],
+ ['dfi','ddr3_dfi_interface','ctrl ↔ PHY bridge','phy', 7,-9, 8,7,3],
+ ['quad','DLL / QUADRATURE','0°·90°·180°·270° gen','fast', 7,-29, 8,6.5,3],
+ ['level','WL / RL ENGINES','leveling calibration','phy', 7, 1, 8,7,3],
+ ['zq','ZQ CALIBRATION','ZQCL 512 · ZQCS','phy', 7, 11, 8,6.5,3],
+ ['iserdes','ISERDES ×64','DQS capture → gearbox','phy', 16.5,-5, 6.5,10,3.4],
+ ['oserdes','OSERDES ×64','512b → DDR serial','phy', 16.5, 8, 6.5,10,3.4],
+ ['dqsgen','DQS GEN ×8','preamble·burst·postamble','phy', 16.5, 20, 6.5,8,3],
+ ['pads','IO PAD RING','98 pins · SSTL-15','phy', 24, -2, 2.6,62,2.6],
+];
+const BANKS=[];
+for(let i=0;i<8;i++){
+  const col=i%4, row=(i/4)|0;
+  BANKS.push(['bank'+i,'BANK '+i,'32768 rows × 1024 cols','dram', 47+col*6.2, row?7.5:-7.5, 5.2,11,3]);
+}
+BANKS.push(['mr','MODE REGS','MR0·MR1·MR2·MR3','dram', 47, -19.5, 5.2,6,2.4]);
+const ALL_BLOCKS = BLOCKS.concat(BANKS);
+
+/* DQ lane traces: pads edge → DRAM edge, one per byte lane */
+const LANE_Z = i => 1 + i*3;          // lanes 0..7  → z = 1..22
+const CA_Z = -14, CK_Z = -26;
+
+/* ───────────────────────── block detail database ───────────────────────── */
+const F=(sev,st,tag,txt)=>({sev,st,tag,txt});
+const INFO = {
+axi_port:{file:'02_top/ddr3_controller_top_enhanced.sv',desc:'System-side AXI4 slave port. Five independent channels in the <b>axi_aclk</b> domain (200–300&nbsp;MHz). All traffic into and out of the controller crosses here.',
+ ports:[['s_axi_awaddr[31:0]','write address'],['s_axi_awid[3:0] / awlen[7:0]','ID + burst length'],['s_axi_wdata[63:0] / wstrb[7:0]','write data + strobes'],['s_axi_bid / bresp / bvalid','write response'],['s_axi_araddr[31:0] / arid','read address'],['s_axi_rdata[63:0] / rid / rlast','read data return']],
+ notes:['INCR bursts up to 8 beats map directly onto one DDR3 BL8 burst (8×64&nbsp;b = 512&nbsp;b).','awlock/awcache/awprot tied off internally at the top level.']},
+axi_slave:{file:'03_user_interface/ddr3_axi4_slave.sv',desc:'AXI4 protocol engine inside <b>ddr3_user_interface</b>. Terminates the 5 channels, runs the handshakes, and generates write responses and read returns.',
+ ports:[['s_axi_aw*/w*/b*/ar*/r*','full AXI4 slave'],['wr_req_valid/ready','to address decoder'],['rd_req_valid/ready','to address decoder']],
+ findings:[F('high','open','ARCH-002','Write completion tracking missing — B-channel response is generated when data is accepted into the FIFO, not when the write actually commits to DRAM.'),F('low','open','CODE-004','B-channel timing: bvalid can assert before the last W beat is fully drained on heavy backpressure.')]},
+addr_dec:{file:'03_user_interface/ddr3_address_decoder.sv',desc:'Maps the flat 32-bit AXI address onto DDR3 geometry. <b>ADDR_MAP_MODE 0 = BRC</b> (Bank-Row-Column) interleave: low bits → column, then bank, then row — consecutive cache lines hit different banks for parallelism.',
+ ports:[['axi_addr[31:0]','input address'],['bank[2:0]','→ BA pins'],['row[14:0]','→ A pins on ACTIVATE'],['col[9:0]','→ A pins on RD/WR']],
+ params:[['ADDR_MAP_MODE','0 = BRC, 1 = RBC'],['ROW/COL/BANK','15 / 10 / 3 bits']]},
+txn_trk:{file:'03_user_interface/ddr3_txn_id_tracker.sv',desc:'Tracks up to <b>16 outstanding transactions</b>. Stores {axi_id, bank, row, col, timestamp} per entry; matches returning read data to the right AXI ID and flags timeouts.',
+ ports:[['txn_complete','completion strobe'],['timeout_axi_id[3:0]','hung-transaction ID'],['data_arrival_time','latency measurement']]},
+wr_fifo:{file:'03_user_interface/ddr3_write_fifo.sv',desc:'Asynchronous write-data FIFO: <b>axi_aclk → ctrl_clk</b> clock-domain crossing. Gray-coded read/write pointers, 3-stage synchronizers, optional internal SECDED protection of the FIFO RAM.',
+ ports:[['wr_clk / wr_en / wr_data[63:0]','AXI side push'],['wr_strb[7:0]','byte strobes travel with data'],['rd_clk / rd_en / rd_data[63:0]','ctrl side pop'],['rd_ecc_err_single/double','FIFO RAM SECDED flags']],
+ params:[['FIFO_DEPTH','16'],['SYNC_STAGES','3'],['ECC_ENABLE','1']],
+ findings:[F('crit','fixed','FIX-CDC-001','CDC data/toggle same-cycle race in ddr3_cdc_bus_sync — data and req-toggle fired on the same source edge. Fixed with a two-phase capture-then-toggle sequence (data_captured_q flag).')]},
+rd_fifo:{file:'03_user_interface/ddr3_read_fifo.sv',desc:'Asynchronous read-data return FIFO: <b>ctrl_clk → axi_aclk</b>. Carries corrected read data plus the transaction ID back to the AXI R channel.',
+ ports:[['wr side (ctrl_clk)','data + rd_data_id + last'],['rd side (axi_aclk)','→ s_axi_rdata/rid/rlast']],
+ params:[['FIFO_DEPTH','16'],['SYNC_STAGES','3']]},
+rd_q:{file:'06_cmd_queue/ddr3_read_cmd_queue.sv',desc:'16-deep read request queue inside <b>ddr3_cmd_queue_manager</b>. Each entry is a cmd_request_t {bank,row,col,id,axi_len,qos,age}; the <b>age field increments every cycle</b> to feed starvation-aware arbitration.',
+ params:[['QUEUE_DEPTH','16'],['ALMOST_FULL','12']],
+ ports:[['enq_valid/data/qos','from user interface'],['deq_valid/data','to FR-FCFS / scheduler'],['queue_count / peak_occupancy','statistics']]},
+wr_q:{file:'06_cmd_queue/ddr3_write_cmd_queue.sv',desc:'16-deep write request queue — same structure as the read queue. Write requests carry qos=2\'b10 (normal) from the top level.',
+ params:[['QUEUE_DEPTH','16'],['ALMOST_FULL','12']]},
+ref_q:{file:'06_cmd_queue/ddr3_refresh_queue.sv',desc:'4-deep refresh queue. Plain FIFO — refresh requests are never reordered, only deferred (JEDEC allows max 8 postponed refreshes).',
+ params:[['REFRESH_QUEUE_DEPTH','4']]},
+refresh:{file:'08_refresh/ddr3_refresh_controller.sv',desc:'Counts down <b>tREFI = 7.8&nbsp;µs</b> (3120 ctrl_clk cycles @400&nbsp;MHz) and raises refresh_req. Escalates to <b>urgent</b> as postponed count approaches the JEDEC limit of 8. Enforces tRFC = 208 cycles (520&nbsp;ns) after each REF.',
+ fsm:['REFR_IDLE','REFR_COUNTING','REFR_WAIT_BANKS','REFR_WAITING_GRANT','REFR_REQUEST','REFR_IN_PROGRESS','REFR_ZQ_REQUEST','REFR_ERROR'],
+ params:[['tREFI_NS','7800'],['tRFC_CYCLES','208'],['MAX_POSTPONED','8'],['ZQ_INTERVAL_REFS','8192']],
+ ports:[['refresh_req / urgent / critical','to scheduler'],['refresh_grant','grant back'],['postponed_count[3:0]','deferred refreshes'],['zq_req / zq_short','periodic ZQCS']],
+ findings:[F('med','open','ARCH-004','Temperature-compensated refresh (2× rate above 85 °C) not implemented — temp_gt_85c input exists but the rate switch is incomplete.'),F('low','open','ARCH-006','No opportunistic refresh scheduling during idle periods.')]},
+init:{file:'11_init_config/ddr3_initialization_fsm.sv',desc:'JEDEC power-up sequencer. Holds <b>RESET# low 200&nbsp;µs</b>, CKE low 500&nbsp;µs, then programs mode registers in the mandatory order <b>MR2 → MR3 → MR1 → MR0</b> and fires ZQCL. Includes ddr3_mode_register_controller, ddr3_zq_calibration_controller, ddr3_cke_controller.',
+ fsm:['ST_RESET_LOW (200µs)','ST_RESET_DEASSERT (500µs)','ST_CKE_HIGH (tXPR)','ST_MR2_ISSUE','ST_MR3_ISSUE','ST_MR1_ISSUE','ST_MR0_ISSUE (tMOD=12)','ST_ZQCL_ISSUE (512cy)','ST_VERIFY_DLLK (512cy)','ST_COMPLETE','ST_ERROR'],
+ params:[['tMRD','4 nCK'],['tMOD','12 nCK'],['tDLLK','512 nCK'],['tZQinit','512 nCK'],['MR0','CL=11, WR=12, DLL-reset'],['MR1','DLL en, RTT_NOM 60Ω'],['MR2','CWL=8, RTT_WR'],['MR3','MPR control']],
+ findings:[F('high','fixed','FIX-INIT-002','DLL-lock race in init FSM — init could complete before tDLLK elapsed. Fixed with dedicated dllk counter state.'),F('med','open','ARCH-005','Power-down / self-refresh entry &amp; exit sequencing incomplete.')]},
+ecc:{file:'12_ecc/ddr3_ecc_controller.sv',desc:'<b>SECDED</b> (single-error-correct, double-error-detect) Hamming code: 64 data + 8 parity bits. Encoder sits on the write path, decoder + corrector on the read path, plus a background scrubbing engine.',
+ ports:[['wr_data_in[63:0] → wr_data_out[71:0]','encode'],['rd_data_in[71:0] → rd_data_out[63:0]','decode + correct'],['rd_correctable / uncorrectable','syndrome result'],['scrub_req / scrub_addr[28:0]','background scrub'],['irq_correctable / irq_uncorrectable','interrupts']],
+ params:[['SCRUB_INTERVAL','100 000 cycles'],['DATA+ECC','64 + 8']],
+ notes:['With the current ×64 PHY (8 lanes) the 9th ECC lane is not physically present — read parity is tied to 0 and ECC must be system-disabled until a ×72 PHY is attached (top-level comment FIX-C8).']},
+frfcfs:{file:'07_scheduler/ddr3_fr_fcfs_reorder.sv',desc:'<b>First-Ready, First-Come-First-Served</b> reordering: scans up to 4 entries deep for requests that hit an already-open row and promotes them ahead of FIFO order. Fairness counter forces a write after 8 consecutive reads.',
+ params:[['FRFCFS_LOOKAHEAD','4'],['FAIRNESS_THRESHOLD','8'],['PRI_PAGE_HIT_BONUS','200'],['AGING_RATE','4']],
+ ports:[['banks_active[7:0] + open_rows[8][14:0]','page-hit detect'],['sched_req_valid / sched_req','reordered stream'],['stat_page_hits / misses / reorder_events','counters']],
+ findings:[F('med','open','ARCH-003','FR-FCFS reorder buffer is present in RTL but not wired into the live scheduler path at top level — currently bypassed by the simple round-robin arbiter.')]},
+arbiter:{file:'07_scheduler/ddr3_priority_arbiter.sv',desc:'Weighted priority arbitration: <b>priority = base + qos·2000 + age·64 + page-hit bonus</b>. Refresh-urgent always wins. Starvation guard force-grants any request older than 200 cycles.',
+ params:[['REFRESH_BASE','50 000'],['READ_BASE','20 000'],['WRITE_BASE','10 000'],['PAGE_HIT_BONUS','5 000'],['STARVATION_THRESH','200 cycles']],
+ ports:[['refresh/read/write_req + age + qos','competing inputs'],['grant_type[1:0] / grant_valid','winner'],['grant_bank / grant_row','routed to cmd gen']]},
+page_pol:{file:'07_scheduler/ddr3_page_policy.sv',desc:'Decides whether each RD/WR should auto-precharge (A10). Four modes: <b>OPEN</b> (leave row open), <b>CLOSE</b> (always A10=1), <b>ADAPTIVE</b> (switch on measured hit-rate), <b>HYBRID</b> (per-bank adaptive).',
+ ports:[['policy_mode[1:0]','cfg_page_policy'],['is_page_hit / needs_precharge','decision'],['keep_row_open','→ auto_precharge bit'],['total_hits / misses / policy_switches','stats']]},
+bank_trk:{file:'07_scheduler/ddr3_bank_state_tracker.sv',desc:'Shadow model of all 8 DRAM banks: state, open row, and timing-window tracking. The <b>tFAW circular buffer</b> stores the last 4 ACTIVATE timestamps — a 5th ACT inside the 40-cycle window is blocked.',
+ fsm:['BANK_IDLE','BANK_ACTIVATING','BANK_ACTIVE','BANK_READING','BANK_WRITING','BANK_PRECHARGING'],
+ params:[['tFAW_DEPTH','4 (window 40 cy)'],['COUNTER_WIDTH','32']],
+ ports:[['query_bank → bank_state / open_row / row_hit','lookup'],['activate_req → tFAW/tRRD_violation','window check'],['bank_idle[7:0] / bank_active[7:0]','status bitmap']]},
+cmdgen:{file:'07_scheduler/ddr3_command_generator.sv',desc:'Per-request micro-sequencer (27-state FSM). Expands one request into the JEDEC command sequence: <b>PRE (if row conflict) → ACT → wait tRCD → RD/WR → wait tRTP/tWR → PRE</b>. Page hits skip straight to RD/WR.',
+ fsm:['ST_IDLE','ST_ISSUE_PRE','ST_WAIT_tRP','ST_ISSUE_ACT','ST_WAIT_tRCD','ST_ISSUE_READ','ST_READING_DATA','ST_WAIT_tRTP','ST_ISSUE_WRITE','ST_WRITING_DATA','ST_WAIT_tWR','ST_AUTO_PRE_WAIT','…(27 total)'],
+ ports:[['cmd_valid / cmd_out (ddr3_cmd_packet_t)','{cmd_type,bank,row,col,id,A10}'],['read_data_enable / write_data_enable','CAS/CWL pipeline triggers'],['data_burst_id[7:0] / cnt[2:0] / burst_last','beat tracking'],['bank_update_req/state/row','writes back to tracker']],
+ findings:[F('high','open','ARCH-001','Single-rank only — NUM_RANKS=1 hardwired through the scheduler; no tRTRS rank-to-rank turnaround logic.')]},
+timing:{file:'09_timing/ddr3_timing_controller.sv',desc:'Final JEDEC gatekeeper. Per-bank down-counters (<b>tRC, tRAS, tRCD, tRP</b>) plus global timers (<b>tCCD, tWTR, tRTW, tRRD, tRFC, tMRD, tMOD</b>). Any command arriving early is stalled (cmd_ready=0) until every constraint clears. Bypassed during init.',
+ params:[['tRCD / tRP','11 cy (13.75 ns)'],['tRAS','28 cy (35 ns)'],['tRC','39 cy'],['tRRD','5 cy'],['tFAW','40 cy (50 ns)'],['tWTR / tRTP','6 cy'],['tWR','12 cy'],['tCCD','4 cy'],['CL / CWL','11 / 8'],['tRFC','208 cy (4Gb)']],
+ ports:[['cmd_valid/cmd_in → cmd_ready','stalling handshake'],['phy_cmd_valid / phy_cmd','to JEDEC encoder'],['total_timing_violations_prevented[31:0]','it counts its saves']]},
+wracc:{file:'02_top §16 (wr_burst_accum)',desc:'Gathers 8 sequential 64-bit ECC-encoded beats into one <b>512-bit BL8 burst</b> for the PHY, and builds the 64-bit data-mask image. DDR3 DM is active-high mask, AXI WSTRB is active-high enable → <b>DM = ~WSTRB</b>.',
+ ports:[['ecc_wr_data_out[71:0]','beat input (post-ECC)'],['wr_burst_buffer[511:0]','assembled burst'],['wr_burst_dm_buffer[63:0]','8 beats × 8 DM bits'],['phy_wr_valid','1-cycle strobe to PHY']]},
+cmdenc:{file:'02_top §13 + 10_phy command encoder',desc:'Translates the internal command enum into JEDEC pin levels: <b>{CS#, RAS#, CAS#, WE#}</b> plus the A10 auto-precharge override, and muxes row / column / MR-value onto the shared address bus.',
+ params:[['ACT','0_011 (row on A[14:0])'],['READ','0_101 (col, A10=AP)'],['WRITE','0_100 (col, A10=AP)'],['PRECHARGE','0_010 (A10=all-banks)'],['REFRESH','0_001'],['MRS','0_000 (BA=MR#)'],['ZQ','0_110 (A10=long)'],['NOP','0_111']],
+ findings:[F('high','fixed','FIX-ODT-001','ODT asserted in the same cycle as WRITE, violating JEDEC tODTon = 2 nCK. Fixed with a 2-stage delay shift register odt_dly_sr.')]},
+dfi:{file:'10_phy/ddr3_dfi_interface.sv',desc:'DFI-style controller↔PHY bridge: command pipeline (CTRL_DELAY stages), write-enable pipeline (PHY_WRLAT=3), read-valid pipeline (PHY_RDLAT=4), and DFI 4.0 update handshakes (ctrlupd/phyupd) for DLL drift events.',
+ ports:[['dfi_wrdata[63:0] / wrdata_en / wrdata_mask','write path'],['dfi_rddata[63:0] / rddata_valid','read path'],['dfi_ctrlupd_req/ack · dfi_phyupd_req/ack','update handshakes']],
+ fsm:['INIT_IDLE','INIT_WAIT_PHY','INIT_WAIT_DLL','INIT_WAIT_WL','INIT_WAIT_RL','INIT_COMPLETE','INIT_ERROR'],
+ findings:[F('med','fixed','CRIT-005','Command pipeline array was sized inconsistently [0:CTRL_DELAY-1]; corrected to exactly CTRL_DELAY stages.')]},
+quad:{file:'10_phy/ddr3_counter_quadrature.sv + ddr3_dll_master.sv',desc:'PLL-free quadrature generator: divides <b>clk_fast (1600 MHz)</b> by 4 into four 400 MHz phases spaced exactly 90° (625 ps). The DLL master locks the 90° tap by binary search over a 256-tap delay line, then tracks PVT drift (recal every 16384 cycles).',
+ fsm:['DLL_RESET','DLL_CALIBRATING (binary search)','DLL_LOCKING','DLL_LOCKED','DLL_TRACKING','DLL_ERROR','DLL_BYPASS','DLL_SUSPEND'],
+ params:[['NUM_TAPS','256 × ~10 ps'],['LOCK_COUNT','512 (tDLLK)'],['tap_180','2 × tap_90 (no cascade)'],['RECAL_INTERVAL','16 384 cy']],
+ findings:[F('high','fixed','FIX-PHY-002','dll_status.locked consumed raw in the clk_div4 domain — metastability on cmd_ready. Fixed with 2-stage synchronizer dll_lock_sync_pipe.'),F('med','fixed','CRIT-003','Binary search halved its step every cycle (skipping the solution); now halves only on UPDATE.'),F('low','open','CODE-001','clk_div4 generated by a data flip-flop instead of an ICG/foundry divider — must be swapped for clock-tree synthesis.')]},
+level:{file:'10_phy/ddr3_write_leveling.sv + ddr3_read_leveling.sv',desc:'<b>Write leveling</b>: MRS1 A7=1, pulse DQS, sweep 256 delay taps until the DRAM feeds back DQ=1 (DQS aligned to CK at the DRAM ball). <b>Read leveling</b>: MPR pattern 0x55 reads while sweeping the DQS gate delay; builds a 256-bit eye map and centers in it (eye must be ≥30 taps ≈ 300 ps).',
+ fsm:['WL_ENTER_MODE','WL_SAMPLE_DQ','WL_CHECK_EDGE','WL_LOCK_DELAY','WL_EXIT_MODE','RL_ISSUE_MPR','RL_SWEEP','RL_FIND_EDGES','RL_CALC_CENTER','RL_LOCK_DELAY'],
+ params:[['taps','256 × 10 ps'],['MIN_EYE','30 taps (300 ps)'],['MPR patterns','0x55 / 0xAA / 0x0F / 0xF0'],['tWLDQSEN','25 nCK']],
+ findings:[F('high','fixed','FIX-PHY-004','Write-leveling DQ feedback was hardcoded to 0 (edge never found). Now wired from dq_deser_array[lane][0].')]},
+zq:{file:'10_phy/ddr3_zq_calibration_controller.sv',desc:'Drive-strength / ODT impedance calibration against the external 240 Ω RZQ resistor. <b>ZQCL</b> (512 cycles) at init; periodic <b>ZQCS</b> (64 cycles) every 8192 refreshes to track voltage/temperature drift.',
+ params:[['tZQinit','512 nCK'],['tZQCS','64 nCK'],['interval','8192 refreshes']]},
+iserdes:{file:'10_phy/ddr3_iserdes.sv',desc:'Per-DQ-bit capture chain: <b>IDDR capture in the DQS domain</b> (gated by the calibrated DQS gate), ping-pong FIFO with Gray-coded CDC into clk_fast, then 2→4 and 4→8 gearboxes down to the 512-bit parallel bus.',
+ ports:[['data_rise_raw / data_fall_raw','DQS-edge captures'],['dqs_gate_delay_taps[7:0]','RL-calibrated gate'],['dq_deser_array[lane][7:0]','parallel bytes out']],
+ findings:[F('med','fixed','FIX-PHY-003','DQS read-delay bus truncated to [2:0] — lost 5 MSBs of the 8-bit calibrated value. Widened to full [7:0].')]},
+oserdes:{file:'10_phy/ddr3_oserdes_v3.sv',desc:'Per-DQ-bit serializer: input register (clk_div4) → CDC FIFO → parallel-to-serial shifter at <b>clk_fast 1600 MHz</b> → ODDR output register on <b>clk_90°</b> so DQ is automatically centered in the DQS eye.',
+ ports:[['wr_data slice','8 bits per burst per pin'],['output_enable','2-stage synced OE'],['data_out_p','to IO pad']],
+ notes:['SVA: OE stable ≥4 clk_ddr cycles; FIFO overflow/underflow can never assert together.']},
+dqsgen:{file:'10_phy/ddr3_dqs_generator.sv',desc:'Generates the write strobe per byte lane. FSM in clk_0° with toggle logic in clk_90°: <b>1 tCK preamble low (tWPRE) → 4 toggles (BL8) → postamble (tWPST)</b>. Coordinates with ODT so termination never changes mid-burst.',
+ fsm:['DQS_IDLE','DQS_ODT_WAIT','DQS_PREAMBLE','DQS_BURST ×4','DQS_POSTAMBLE'],
+ findings:[F('med','fixed','MAJ-003','burst_done sampled before resync to clk_0° (CDC violation) — now uses burst_counter_0deg.'),F('med','fixed','MAJ-004','No ODT coordination; added DQS_ODT_WAIT state.')]},
+pads:{file:'10_phy/ddr3_io_pad.sv',desc:'98-pin SSTL-15 pad ring. Tri-state: <code>pad = OE ? data : 1\'bz</code>. Drive strength RZQ/6 = 40 Ω, ODT 60 Ω, fast slew, Schmitt inputs. Pin groups (north→south): CK± · CMD(CS#,RAS#,CAS#,WE#) · BA[2:0]+A[14:0] · CKE/ODT/RESET# · DQ lanes 0–7 each with DQS± and DM.',
+ ports:[['ddr3_ck_p/n','differential clock, 400 MHz'],['ddr3_ras_n/cas_n/we_n/cs_n','command'],['ddr3_ba[2:0] / addr[14:0]','bank + address'],['ddr3_dq[63:0]','bidirectional data'],['ddr3_dqs_p/n[7:0]','strobes, 90° to DQ'],['ddr3_dm[7:0]','write mask'],['ddr3_odt / cke / reset_n','control']],
+ findings:[F('crit','fixed','FIX-PHY-001','cmd_ready combinational loop — net driven by always_comb AND read back by WL/RL engines. Fixed with a command mux + cmd_ready = dll_locked_sync && init_complete.'),F('low','open','CODE-002','CK± differential generated behaviorally (simulation only) — needs a true ODDR/foundry cell.'),F('low','open','CODE-003','RESET# follows rst_n directly instead of the init FSM timer in one path.')]},
+mr:{file:'DRAM-side mode registers',desc:'DRAM-internal configuration registers, programmed via MRS commands with BA selecting the register. MR0: CL=11, WR=12, burst; MR1: DLL enable, output drive, RTT_NOM; MR2: CWL=8, RTT_WR; MR3: MPR access for read leveling.'},
+};
+for(let i=0;i<8;i++){INFO['bank'+i]={file:'DDR3 SDRAM internal bank '+i,desc:'One of 8 independent banks: 32768 rows × 1024 columns × 8 bits per device. ACTIVATE copies a 1 KB row into the row buffer (sense amps); READ/WRITE burst against the open row; PRECHARGE writes it back. The controller\'s bank_state_tracker mirrors this state on-chip.',
+ params:[['rows','32768 (A[14:0])'],['cols','1024 (A[9:0])'],['page size','1 KB'],['tRCD/tRP/tRAS','11/11/28 cycles']]};}
+
+/* ───────────────────────── scenarios ─────────────────────────
+   f/t = block ids · via:'lane'|'ca'|'ck' routes across the PCB ·
+   fx: cdc | bank:<id> | banks | dq | multi  */
+const SCN = {
+write:{name:'WRITE transaction', steps:[
+ {f:'axi_port',t:'axi_slave',dur:2.2,label:'AW — write address handshake',desc:'The SoC master presents a write burst. Address phase completes when awvalid and awready are high in the same axi_aclk cycle.',sigs:['s_axi_awvalid ↑','s_axi_awready ↑','s_axi_awaddr[31:0]','s_axi_awid[3:0]','s_axi_awlen=7 (8 beats)','s_axi_awburst=INCR']},
+ {f:'axi_slave',t:'addr_dec',dur:1.8,label:'Address decode — BRC mapping',desc:'The flat 32-bit address is split into DDR3 geometry. BRC interleave puts the bank bits low so sequential bursts stripe across banks.',sigs:['axi_addr[31:0]','→ col[9:0]','→ bank[2:0]','→ row[14:0]']},
+ {f:'axi_port',t:'wr_fifo',dur:2.6,label:'W — 8 data beats stream in',fx:'multi',desc:'Eight 64-bit beats with byte strobes flow into the asynchronous write FIFO on axi_aclk. wlast marks beat 7.',sigs:['s_axi_wvalid/wready ×8','s_axi_wdata[63:0]','s_axi_wstrb[7:0]','s_axi_wlast ↑ (beat 7)']},
+ {f:'addr_dec',t:'wr_q',dur:2.2,label:'Request crosses into ctrl_clk',fx:'cdc',desc:'The decoded request crosses the CDC boundary (gray-coded async FIFO, 3-stage sync) and is enqueued as a cmd_request_t in the 16-deep write queue. Its age counter starts ticking.',sigs:['wr_req_valid','cmd_request_t{bank,row,col}','axi_len, qos=2\'b10','age=0 → ++ every cycle']},
+ {f:'wr_fifo',t:'ecc',dur:2.0,label:'Data crosses CDC → ECC encode',fx:'cdc',desc:'Write data pops out on ctrl_clk (400 MHz) and runs through the SECDED encoder: 64 data bits gain 8 Hamming parity bits.',sigs:['rd_clk pop @400MHz','ecc_wr_data_in[63:0]','ecc_wr_data_out[71:0]','parity = H·data']},
+ {f:'wr_q',t:'frfcfs',dur:1.8,label:'FR-FCFS page-hit scan',desc:'The reorder stage scans 4 entries deep for requests hitting an already-open row. Page hits jump the queue; fairness logic prevents starvation.',sigs:['lookahead = 4','open_rows[8][14:0]','PRI_PAGE_HIT_BONUS=200','FAIRNESS_THRESHOLD=8']},
+ {f:'frfcfs',t:'arbiter',dur:1.8,label:'Priority arbitration',desc:'Weighted priority: WRITE_BASE 10000 + qos·2000 + age·64 + page-hit 5000. Refresh would outrank us at 50000; today the write wins the grant.',sigs:['priority Σ = 19 304','grant_type = WRITE','grant_valid ↑','grant_bank/row']},
+ {f:'bank_trk',t:'cmdgen',dur:1.8,label:'Bank state lookup',desc:'The shadow bank model reports: target bank is IDLE, no row open → full ACT sequence needed. tFAW window has 2 of 4 slots used — OK to activate.',sigs:['query_bank=2','bank_state=BANK_IDLE','row_hit=0','tFAW_violation=0 (2/4)']},
+ {f:'page_pol',t:'cmdgen',dur:1.5,label:'Page policy decision',desc:'ADAPTIVE policy, current hit-rate above threshold → keep the row open after writing (no auto-precharge, A10=0).',sigs:['policy=ADAPTIVE','is_page_hit=0','keep_row_open=1','auto_precharge=0']},
+ {f:'cmdgen',t:'timing',dur:2.0,label:'ACTIVATE command packet',desc:'The 27-state command generator issues ACT. The timing controller checks the bank\'s tRP/tRC down-counters — clear — and passes it through.',sigs:['cmd_out{ACT,bank=2,row}','bank_tRP_timer[2]=0 ✓','bank_tRC_timer[2]=0 ✓','cmd_ready ↑']},
+ {f:'timing',t:'cmdenc',dur:1.6,label:'JEDEC encode + pipeline register',desc:'The enum becomes pin levels. ACTIVATE = CS#0 RAS#0 CAS#1 WE#1, row address muxed onto A[14:0].',sigs:['phy_cmd_type=5\'b0_011_0','RAS#=0 CAS#=1 WE#=1','addr ← row[14:0]','phy_cmd_valid ↑']},
+ {f:'cmdenc',t:'pads',dur:1.5,label:'ACT drives the CA pins',desc:'The command/address group launches on the rising edge of CK across the SSTL-15 pads.',sigs:['ddr3_ras_n=0','ddr3_cas_n=1','ddr3_we_n=1','ddr3_ba=3\'b010','ddr3_addr=row']},
+ {f:'pads',t:'bank2',via:'ca',dur:2.4,label:'Row opens in bank 2 — wait tRCD',fx:'bank:bank2',desc:'Inside the DRAM, sense amplifiers latch the 1 KB row. The controller must wait tRCD = 11 cycles (13.75 ns) before the first column command.',sigs:['ACT @ bank 2','row buffer ← row','⏱ tRCD = 11 cycles','bank_state→BANK_ACTIVE']},
+ {f:'cmdgen',t:'timing',dur:1.8,label:'WRITE command after tRCD',desc:'tRCD timer expired. WRITE issues with the column address; A10=0 (no auto-precharge, policy says keep the page open).',sigs:['cmd_out{WRITE,col}','bank_tRCD_timer[2]=0 ✓','tCCD=4 ✓ tRTW ✓','write_data_enable ↑']},
+ {f:'cmdenc',t:'pads',dur:1.6,label:'WR on CA bus · ODT after 2 nCK',desc:'WRITE = RAS#1 CAS#0 WE#0. On-die termination asserts exactly 2 clocks later (tODTon) via the odt_dly_sr fix — never in the same cycle.',sigs:['phy_cmd=5\'b0_100_0','ddr3_odt ↑ (+2 nCK)','[FIX-ODT-001]','A[9:0]=col, A10=0']},
+ {f:'ecc',t:'wracc',dur:2.2,label:'Burst accumulation 8×64 → 512',desc:'Eight ECC-encoded beats land in wr_burst_buffer slices. The data-mask image builds in parallel: DM = ~WSTRB (DDR3 mask is active-high).',sigs:['wr_burst_buffer[511:0]','beat_count 0→7','wr_burst_dm_buffer[63:0]','DM = ~s_axi_wstrb']},
+ {f:'wracc',t:'oserdes',dur:1.8,label:'512-bit burst → PHY (CWL = 8)',desc:'phy_wr_valid strobes for one cycle; the PHY must place data on the pins exactly CWL = 8 clocks after the WRITE command.',sigs:['wr_data[511:0]','wr_dm[63:0]','phy_wr_valid ↑','⏱ CWL = 8 nCK']},
+ {f:'oserdes',t:'pads',dur:2.0,label:'Serialization @ 1600 MHz',desc:'Each pin\'s OSERDES: input reg → CDC FIFO → 4-cycle shift at clk_fast → ODDR on clk_90°, so DQ lands centered in the DQS eye.',sigs:['clk_fast 1600 MHz','shift 8b in 4 cycles','ODDR @ clk_90°','output_enable (2FF sync)']},
+ {f:'pads',t:'bank2',via:'dq',dur:3.2,label:'DQ burst + DQS strobes fly',fx:'dq,bank:bank2',desc:'All 8 lanes fire together: DQS preamble (1 tCK low) → 4 differential toggles clocking 8 data edges → postamble. DM masks any strobed-out bytes. 64 bytes land in the open row.',sigs:['ddr3_dq[63:0] ×8 edges','ddr3_dqs_p/n[7:0]','tWPRE → 4 toggles → tWPST','ddr3_dm[7:0] = ~strb']},
+ {f:'cmdgen',t:'timing',dur:1.6,label:'Write recovery — tWR = 12',desc:'The bank must hold the row tWR = 12 cycles (15 ns) before any precharge. Policy keeps the page open for future hits, so no PRE is sent now.',sigs:['⏱ tWR = 12 cycles','bank stays ACTIVE','page open for hits','wr_complete → UI']},
+ {f:'axi_slave',t:'axi_port',dur:1.8,label:'B — write response',desc:'BRESP=OKAY returns with the original ID. ⚠ Review note ARCH-002: this fires on FIFO acceptance, not true DRAM commit — completion tracking is an open finding.',sigs:['s_axi_bvalid ↑','s_axi_bid = awid','s_axi_bresp = OKAY','⚠ ARCH-002 open']},
+]},
+read:{name:'READ transaction', steps:[
+ {f:'axi_port',t:'axi_slave',dur:2.0,label:'AR — read address handshake',desc:'Read burst request: arvalid/arready handshake on axi_aclk, ID tagged for out-of-order return matching.',sigs:['s_axi_arvalid/arready','s_axi_araddr[31:0]','s_axi_arid[3:0]','s_axi_arlen=7']},
+ {f:'axi_slave',t:'addr_dec',dur:1.6,label:'Decode to {bank,row,col}',desc:'Same BRC mapping as writes. This address targets bank 5 — and its row is already open from a previous access.',sigs:['→ bank[2:0]=5','→ row[14:0]','→ col[9:0]']},
+ {f:'addr_dec',t:'rd_q',dur:2.0,label:'Enqueue read (CDC crossing)',fx:'cdc',desc:'Request crosses into ctrl_clk and lands in the 16-deep read queue. The AXI ID is pushed into the rd_id FIFO (depth 16) for return matching.',sigs:['rd_req_valid','cmd_request_t','rd_id FIFO push','age counter starts']},
+ {f:'rd_q',t:'frfcfs',dur:1.8,label:'FR-FCFS spots a page hit',desc:'The lookahead scan finds this request hits bank 5\'s open row — it gets promoted past older row-miss requests (+200 priority bonus).',sigs:['open_row[5] == req.row ✓','page-hit promotion','stat_page_hits++','reorder_event']},
+ {f:'frfcfs',t:'arbiter',dur:1.6,label:'Grant: READ wins',desc:'READ_BASE 20000 + page-hit 5000 + aging beats pending writes. Reads outrank writes by default for latency.',sigs:['priority = 25 192','grant_type = READ','grant_valid ↑']},
+ {f:'bank_trk',t:'cmdgen',dur:1.6,label:'Page HIT — skip ACT entirely',desc:'Bank 5 is ACTIVE with the matching row. The command generator bypasses PRE/ACT/tRCD and goes straight to ST_ISSUE_READ.',sigs:['bank_state=BANK_ACTIVE','row_hit = 1 ✓','skip ACT & tRCD','saves ~22 cycles']},
+ {f:'cmdgen',t:'timing',dur:1.6,label:'READ command packet',desc:'CMD_READ with column address. Timing controller verifies tCCD (4) and read/write turnaround tWTR — all clear.',sigs:['cmd_out{READ,bank=5,col}','tCCD=4 ✓','tWTR ✓','read_data_enable ↑']},
+ {f:'timing',t:'cmdenc',dur:1.4,label:'JEDEC encode',desc:'READ = CS#0 RAS#1 CAS#0 WE#1. Column on A[9:0], A10=0 (no auto-precharge — page policy holds the row).',sigs:['phy_cmd=5\'b0_101_0','A[9:0]=col, A10=0','phy_cmd_valid ↑']},
+ {f:'cmdenc',t:'pads',dur:1.4,label:'READ drives the CA pins',desc:'Command launches across the pad ring on the next CK rising edge.',sigs:['ddr3_ras_n=1','ddr3_cas_n=0','ddr3_we_n=1','ddr3_ba=3\'b101']},
+ {f:'pads',t:'bank5',via:'ca',dur:2.6,label:'CAS latency — CL = 11',fx:'bank:bank5',desc:'The DRAM column decoder selects 64 bytes from the open row. Data will appear on the pins exactly CL = 11 clocks after the READ command.',sigs:['⏱ CL = 11 nCK','column select','prefetch 8n','ODT off during read ✓']},
+ {f:'bank5',t:'pads',via:'dq',dur:3.0,label:'DRAM drives DQ + DQS back',fx:'dq,bank:bank5',desc:'Now the DRAM is the bus master: it sends DQS edge-aligned with DQ (the controller must phase-shift to capture). 8 lanes × 8 edges = 512 bits.',sigs:['ddr3_dq[63:0] ← DRAM','ddr3_dqs_p/n ← DRAM','edge-aligned (tDQSQ)','800 MT/s burst']},
+ {f:'pads',t:'iserdes',dur:2.4,label:'DQS-gated capture + gearboxes',desc:'The calibrated DQS gate (read-leveling eye center, 8-bit tap value) opens; IDDR captures rise/fall bits, then Gray-coded ping-pong FIFO and 2→4→8 gearboxes rebuild parallel bytes.',sigs:['dqs_read_delay[7:0] taps','IDDR rise/fall capture','gray CDC → clk_fast','gearbox 2→4→8 → clk_div4']},
+ {f:'iserdes',t:'dfi',dur:1.8,label:'512-bit read burst assembled',desc:'All 8 byte lanes report word_ready; the burst is assembled lane-by-lane, beat-by-beat onto the 512-bit bus with rd_valid.',sigs:['rd_data[511:0]','rd_valid = OR(lanes)','PHY_RDLAT pipeline']},
+ {f:'dfi',t:'ecc',dur:1.8,label:'ECC syndrome check',desc:'Each 72-bit word is decoded. A single-bit upset would be corrected silently (counter++); a double-bit error raises irq_uncorrectable.',sigs:['syndrome = H·word','correctable? fix bit','stat_correctable_count','rd_data_out[63:0]']},
+ {f:'ecc',t:'rd_fifo',dur:1.8,label:'Beats split + CDC return',fx:'cdc',desc:'The 512-bit burst splits back into 8 beats which cross the async read FIFO into the axi_aclk domain.',sigs:['8 × 64-bit beats','gray-pointer CDC','rd_data_id attached']},
+ {f:'rd_fifo',t:'txn_trk',dur:1.4,label:'ID match',desc:'The transaction tracker pops the rd_id FIFO and matches data to the original AXI ID, measuring round-trip latency.',sigs:['rd_id FIFO pop','rid = arid ✓','latency timestamp']},
+ {f:'txn_trk',t:'axi_port',dur:2.2,label:'R — read data returns',fx:'multi',desc:'Eight beats stream out on the R channel; rlast marks the final beat. Transaction complete.',sigs:['s_axi_rvalid ×8','s_axi_rdata[63:0]','s_axi_rid','s_axi_rlast ↑','s_axi_rresp=OKAY']},
+]},
+refresh:{name:'REFRESH cycle', steps:[
+ {f:'refresh',t:'ref_q',dur:2.2,label:'tREFI expires — refresh due',desc:'The 7.8 µs interval counter (3120 ctrl_clk cycles) hits zero. A refresh request enters the 4-deep refresh queue. Postponed count: 2 of max 8.',sigs:['tREFI = 7.8 µs ⏱','refresh_req ↑','postponed_count = 2/8','urgent = 0 (yet)']},
+ {f:'ref_q',t:'arbiter',dur:1.8,label:'Refresh outranks everything',desc:'REFRESH_BASE = 50000 — more than double any read or write. If postponed count neared 8, refresh_urgent would force an immediate grant.',sigs:['priority = 50 000+','grant_type = REFRESH','refresh_grant ↑']},
+ {f:'arbiter',t:'cmdgen',dur:1.6,label:'Drain & block new commands',desc:'In-flight bursts complete, then the command generator fences the pipeline — REF requires all banks idle.',sigs:['pipeline fence','banks_active=8\'b0010_0100','need PRECHARGE_ALL']},
+ {f:'cmdgen',t:'timing',dur:1.6,label:'PRECHARGE ALL',desc:'PRE with A10=1 closes every open row. Per-bank tRAS minimums are verified before it passes.',sigs:['cmd=PRECHARGE_ALL','A10 = 1','tRAS[banks] ✓','⏱ tRP = 11 after']},
+ {f:'cmdenc',t:'pads',dur:1.5,label:'PREA on the CA bus',desc:'RAS#0 CAS#1 WE#0 with A10 high — all banks precharge simultaneously.',sigs:['phy_cmd=5\'b0_010_1','ddr3_addr[10]=1','all rows close']},
+ {f:'cmdenc',t:'pads',dur:1.5,label:'REFRESH command issues',desc:'After tRP: REF = RAS#0 CAS#0 WE#1. The DRAM\'s internal counter picks which rows to refresh — the controller never knows.',sigs:['phy_cmd=5\'b0_001_0','CKE high throughout','internal row counter']},
+ {f:'pads',t:'bank3',via:'ca',dur:3.0,label:'All 8 banks refresh — tRFC 208',fx:'banks',desc:'Internally every bank activates and restores one (or more) rows. The bus is frozen for tRFC = 208 cycles (520 ns @ 4Gb). The timing controller blocks all commands.',sigs:['⏱ tRFC = 208 cycles','all banks busy','tRFC_timer counting','cmd_ready = 0']},
+ {f:'refresh',t:'ref_q',dur:1.8,label:'Done — counter re-arms',desc:'total_refreshes++ and the tREFI countdown restarts. Every 8192 refreshes, a ZQCS calibration request piggybacks to re-trim the output drivers.',sigs:['total_refreshes++','tREFI re-armed','ZQCS in 8190 refs','postponed_count--']},
+]},
+init:{name:'INIT sequence', steps:[
+ {f:'init',t:'pads',via:'ca',dur:2.6,label:'Power-up: RESET# low 200 µs',desc:'JEDEC demands RESET# held low ≥200 µs after power stabilizes, with CKE low. The init FSM\'s wait counter enforces it — no shortcuts.',sigs:['ddr3_reset_n = 0','ddr3_cke = 0','⏱ tINIT2 = 200 µs','watchdog armed']},
+ {f:'init',t:'pads',via:'ca',dur:2.4,label:'RESET# high · CKE waits 500 µs',desc:'RESET# deasserts; CKE must stay low another 500 µs (tINIT3) before the DRAM may be clocked.',sigs:['ddr3_reset_n = 1','⏱ tINIT3 = 500 µs','CK± running','NOP on bus']},
+ {f:'init',t:'pads',via:'ck',dur:2.0,label:'CKE high + tXPR',desc:'Clock-enable rises; after tXPR (tRFC + 10 ns) the DRAM is ready for its first command.',sigs:['ddr3_cke ↑','⏱ tXPR = tRFC+10ns','stable CK 400 MHz']},
+ {f:'init',t:'cmdenc',dur:1.8,label:'MRS → MR2 (CWL, RTT_WR)',desc:'Mode registers must program in order 2→3→1→0. MR2 sets CAS write latency 8 and dynamic write termination.',sigs:['MRS BA=3\'b010','CWL = 8','RTT_WR = 60 Ω','⏱ tMRD = 4']},
+ {f:'cmdenc',t:'mr',via:'ca',dur:1.8,label:'MR2 latches in the DRAM',fx:'bank:mr',desc:'RAS#0 CAS#0 WE#0 with BA=2 — the address bus carries the register value, not an address.',sigs:['phy_cmd=5\'b0_000_0','A[14:0] = MR2 value']},
+ {f:'init',t:'cmdenc',dur:1.6,label:'MRS → MR3 (MPR)',desc:'MR3 controls the multi-purpose register used later by read-leveling for known-pattern reads.',sigs:['MRS BA=3\'b011','MPR = normal (yet)','⏱ tMRD = 4']},
+ {f:'init',t:'cmdenc',dur:1.6,label:'MRS → MR1 (DLL, ODT)',desc:'Enables the DRAM\'s internal DLL, sets output drive RZQ/6=40 Ω and nominal termination RTT_NOM=60 Ω.',sigs:['MRS BA=3\'b001','DLL enable = 1','ODS 40Ω · RTT 60Ω','⏱ tMRD = 4']},
+ {f:'init',t:'cmdenc',dur:1.8,label:'MRS → MR0 (CL, DLL reset)',desc:'Last: CAS latency 11, write recovery 12, and DLL-reset=1, which starts the DRAM DLL locking. tMOD = 12 before any non-MRS command.',sigs:['MRS BA=3\'b000','CL=11 · WR=12','DLL RESET = 1','⏱ tMOD = 12']},
+ {f:'cmdenc',t:'mr',via:'ca',dur:1.6,label:'ZQCL — long calibration',fx:'bank:mr',desc:'ZQ long calibration (A10=1) trims the DRAM output impedance against the external 240 Ω resistor. 512 cycles.',sigs:['phy_cmd=5\'b0_110_0','A10 = 1 (long)','⏱ tZQinit = 512']},
+ {f:'quad',t:'dfi',dur:2.2,label:'DLL lock verify — tDLLK 512',desc:'Both DLLs (controller PHY + DRAM) must lock: 512 cycles. The lock flag crosses clk_fast → clk_div4 through the 2-stage synchronizer added by FIX-PHY-002.',sigs:['⏱ tDLLK = 512 nCK','dll_status.locked ↑','2FF CDC sync','[FIX-PHY-002]']},
+ {f:'init',t:'dfi',dur:1.8,label:'init_complete — controller live',desc:'cfg_init_complete propagates (CDC-synced into each domain); cmd_ready = dll_locked_sync && init_complete now allows normal traffic. Next: leveling calibration.',sigs:['init_complete ↑','cmd_ready ↑','refresh_enable ↑','→ run CALIBRATION']},
+]},
+cal:{name:'CALIBRATION (WL/RL)', steps:[
+ {f:'quad',t:'oserdes',dur:2.2,label:'Quadrature phases distribute',desc:'clk_fast 1600 MHz divides into four 400 MHz phases spaced 625 ps. clk_0° drives CK and commands, clk_90° launches DQ/DQS centered in the eye.',sigs:['clk_0° / 90° / 180° / 270°','spacing = 625 ps','DLL binary search done','256-tap delay line']},
+ {f:'level',t:'cmdenc',dur:1.8,label:'Write leveling entry — MR1 A7=1',desc:'The DRAM enters write-leveling mode: it will sample CK with each DQS rising edge and report the result on DQ.',sigs:['MRS1, A[7]=1','⏱ tWLDQSEN = 25 nCK','DRAM samples CK']},
+ {f:'dqsgen',t:'pads',via:'lane3',dur:2.4,label:'DQS pulses sweep 256 taps',desc:'For each delay tap the controller pulses DQS and reads the DRAM\'s feedback. Searching for the 0→1 edge where DQS aligns with CK at the DRAM ball.',sigs:['dqs delay tap 0…255','pulse → sample','per-lane sweep ×8']},
+ {f:'pads',t:'level',via:'lane3',dur:2.2,label:'DQ feedback — edge found',desc:'DQ flips 0→1 at tap 117: DQS now arrives with CK. This feedback path was hardcoded to zero before FIX-PHY-004 — leveling could never finish.',sigs:['dq_feedback[lane] 0→1','lock tap = 117','[FIX-PHY-004] ✓','MRS1 A[7]=0 exit']},
+ {f:'level',t:'cmdenc',dur:1.8,label:'Read leveling — MPR mode on',desc:'MR3 A2=1 switches the DRAM to multi-purpose-register reads: every READ now returns the fixed pattern 0x55 instead of array data.',sigs:['MRS3, A[2]=1','MPR pattern 0x55','RL_ISSUE_MPR']},
+ {f:'pads',t:'iserdes',via:'lane3',dur:2.6,label:'Eye sweep — 256 taps × reads',desc:'MPR reads repeat while the DQS gate delay sweeps all 256 taps. Each tap is marked valid if the captured byte matches 0x55/0xAA/0x0F/0xF0.',sigs:['eye_map[255:0] builds','match 0x55? mark tap','sweep all 8 lanes']},
+ {f:'iserdes',t:'level',dur:2.0,label:'Eye edges → center',desc:'Left edge tap 88, right edge tap 152: eye width 64 taps (~640 ps) ≥ the 30-tap minimum. Gate locks at the center, tap 120.',sigs:['left=88 right=152','width=64 ≥ 30 ✓','dqs_read_delay=120','[FIX-PHY-003] full 8b']},
+ {f:'level',t:'dfi',dur:1.8,label:'All 8 lanes calibrated',desc:'lane_status reports calibrated=1 with eye metrics per lane. MPR off, PHY fully operational — the datapath you saw in READ/WRITE is now trustworthy at 1600 MT/s.',sigs:['lane_status[8] ✓','eye_width_ps per lane','wl_done & rl_done','cal_state → CAL_DONE']},
+]},
+};
+
+/* ════════════════════════════════════════════════════════════════════════
+   2. THREE.JS SCENE
+   ════════════════════════════════════════════════════════════════════════ */
+const root = document.getElementById('scene');
+let renderer;
+try {
+  renderer = new THREE.WebGLRenderer({antialias:true});
+} catch(e) {
+  window.__bootFail('⚠ WebGL is not available in this browser/device.\n'+
+    'Enable hardware acceleration or try another browser.');
+  throw e;
+}
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.setSize(innerWidth,innerHeight);
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+root.appendChild(renderer.domElement);
+
+const scene = new THREE.Scene();
+scene.background = new THREE.Color(0x05070f);
+scene.fog = new THREE.Fog(0x05070f, 180, 420);
+
+const camera = new THREE.PerspectiveCamera(46, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(10, 95, 110);
+const controls = new OrbitControls(camera, renderer.domElement);
+controls.target.set(0,2,0);
+controls.enableDamping = true; controls.dampingFactor = .07;
+controls.maxPolarAngle = Math.PI*0.49; controls.minDistance = 20; controls.maxDistance = 320;
+
+scene.add(new THREE.AmbientLight(0x8899cc, .55));
+const hemi = new THREE.HemisphereLight(0x355088, 0x080a12, .6); scene.add(hemi);
+const key = new THREE.DirectionalLight(0xffffff, 1.45);
+key.position.set(-50, 90, 60); key.castShadow = true;
+key.shadow.mapSize.set(2048,2048);
+Object.assign(key.shadow.camera,{left:-110,right:110,top:80,bottom:-80,far:260});
+scene.add(key);
+const rim = new THREE.DirectionalLight(0x4da3ff,.5); rim.position.set(80,40,-80); scene.add(rim);
+
+/* ---------- PCB ---------- */
+const pcb = new THREE.Mesh(new THREE.BoxGeometry(190,1.6,110),
+  new THREE.MeshStandardMaterial({color:0x0a1322, roughness:.85, metalness:.25}));
+pcb.position.set(2,-1.4,0); pcb.receiveShadow = true; scene.add(pcb);
+const grid = new THREE.GridHelper(420, 60, 0x14223c, 0x0c1526);
+grid.position.y = -2.25; scene.add(grid);
+
+/* ---------- dies ---------- */
+function slab(x,z,w,d,h,color){
+  const m = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),
+    new THREE.MeshStandardMaterial({color, roughness:.6, metalness:.45}));
+  m.position.set(x,h/2-0.55,z); m.receiveShadow = m.castShadow = true; scene.add(m); return m;
+}
+slab(-17.5, 0, 90, 72, 2.4, 0x121b2e);   // controller die
+slab(56.5, 0, 31, 50, 2.4, 0x1b1230);    // DRAM die
+/* domain zone tints on controller die */
+function zone(x,z,w,d,color){
+  const g = new THREE.Mesh(new THREE.PlaneGeometry(w,d),
+    new THREE.MeshBasicMaterial({color, transparent:true, opacity:.07, side:THREE.DoubleSide}));
+  g.rotation.x = -Math.PI/2; g.position.set(x,1.92,z); scene.add(g); return g;
+}
+zone(-47,0,21,68,0x3b82f6); zone(-15.5,0,40,68,0x22c55e); zone(14.5,0,21,68,0xf97316);
+/* CDC wall */
+const cdcWall = new THREE.Mesh(new THREE.BoxGeometry(.6,7,66),
+  new THREE.MeshStandardMaterial({color:0x22d3ee, transparent:true, opacity:.16, emissive:0x22d3ee, emissiveIntensity:.4}));
+cdcWall.position.set(-32,4.4,0); scene.add(cdcWall);
+const cdcWall2 = cdcWall.clone(); cdcWall2.position.x = 2.5; scene.add(cdcWall2);
+
+/* ---------- text sprites ---------- */
+function textSprite(lines, opts={}){
+  const fs = opts.fs||34, sub = opts.sub||22, pad = 14;
+  const cv = document.createElement('canvas'); const cx = cv.getContext('2d');
+  cx.font = `600 ${fs}px Segoe UI, Arial`;
+  let w = cx.measureText(lines[0]).width;
+  if(lines[1]){ cx.font = `${sub}px Segoe UI`; w = Math.max(w, cx.measureText(lines[1]).width); }
+  cv.width = Math.ceil(w)+pad*2; cv.height = (lines[1]? fs+sub+18: fs+10)+pad;
+  const x2 = cv.getContext('2d');
+  if(opts.bg!==false){ x2.fillStyle = opts.bgc||'rgba(8,13,26,.82)';
+    x2.beginPath(); x2.roundRect(0,0,cv.width,cv.height,10); x2.fill();
+    x2.strokeStyle = opts.border||'rgba(80,110,170,.5)'; x2.lineWidth = 2; x2.stroke(); }
+  x2.fillStyle = opts.color||'#e8f1ff'; x2.font = `600 ${fs}px Segoe UI, Arial`;
+  x2.textBaseline='top'; x2.fillText(lines[0], pad, pad*0.6);
+  if(lines[1]){ x2.fillStyle = opts.subColor||'#7e93bd'; x2.font = `${sub}px Segoe UI`;
+    x2.fillText(lines[1], pad, pad*0.6+fs+6); }
+  const tex = new THREE.CanvasTexture(cv); tex.anisotropy = 4;
+  const sp = new THREE.Sprite(new THREE.SpriteMaterial({map:tex, transparent:true, depthTest:false}));
+  const s = opts.scale||0.045;
+  sp.scale.set(cv.width*s, cv.height*s, 1);
+  return sp;
+}
+/* big region labels */
+function regionLabel(txt, x, z, scale=.07, color='#5b7099'){
+  const sp = textSprite([txt],{fs:30,bg:false,color,scale});
+  sp.position.set(x, 1.0, z); scene.add(sp);
+}
+regionLabel('AXI DOMAIN', -47, -32); regionLabel('CONTROLLER · ctrl_clk 400 MHz', -14, -32);
+regionLabel('PHY', 14.5, -34.5); regionLabel('DDR3 SDRAM · 4Gb ×64', 56.5, -28.5);
+regionLabel('CDC', -32, 33.5, .06, '#22d3ee'); regionLabel('CDC', 2.5, 33.5, .06, '#22d3ee');
+
+/* ---------- blocks ---------- */
+const blockMap = {}, clickables = [];
+const baseEmissive = .18;
+for(const [id,name,sub,dom,x,z,w,d,h] of ALL_BLOCKS){
+  const color = DOM[dom].c;
+  const g = new THREE.Group();
+  const body = new THREE.Mesh(new THREE.BoxGeometry(w,h,d),
+    new THREE.MeshStandardMaterial({color, roughness:.42, metalness:.35,
+      emissive:color, emissiveIntensity:baseEmissive}));
+  body.castShadow = body.receiveShadow = true;
+  body.position.y = h/2;
+  const edge = new THREE.LineSegments(new THREE.EdgesGeometry(body.geometry),
+    new THREE.LineBasicMaterial({color:0xdfeaff, transparent:true, opacity:.25}));
+  edge.position.copy(body.position);
+  g.add(body, edge);
+  const lbl = textSprite([name.replace(/&amp;/g,'&'), sub],{scale:.042});
+  lbl.position.y = h + 2.1; g.add(lbl);
+  g.position.set(x, 1.85, z);
+  scene.add(g);
+  body.userData.id = id; clickables.push(body);
+  blockMap[id] = {grp:g, body, mat:body.material, h, dom, name, x, z};
+}
+/* container outline plates */
+function plate(x,z,w,d,label){
+  const ln = new THREE.LineSegments(
+    new THREE.EdgesGeometry(new THREE.PlaneGeometry(w,d)),
+    new THREE.LineBasicMaterial({color:0x3a5a8c, transparent:true, opacity:.5}));
+  ln.rotation.x = -Math.PI/2; ln.position.set(x,1.95,z); scene.add(ln);
+  regionLabel(label, x, z+d/2+1.4, .038, '#6e85b5');
+}
+plate(-26,-15,10,22,'ddr3_cmd_queue_manager');
+plate(-10.3,-14.5,23,23,'ddr3_command_scheduler');
+
+/* ---------- pin groups + PCB traces ---------- */
+const PIN_GROUPS = [
+  {z:CK_Z, lbl:'CK± 400MHz', c:0xfbbf24},
+  {z:-20, lbl:'CKE·ODT·RST#', c:0xfbbf24},
+  {z:CA_Z, lbl:'CMD+BA+A[14:0]', c:0xfbbf24},
+];
+for(let i=0;i<8;i++) PIN_GROUPS.push({z:LANE_Z(i), lbl:'DQ'+i+'·DQS±·DM', c:0x22d3ee});
+const traceMat = c => new THREE.LineBasicMaterial({color:c, transparent:true, opacity:.4});
+for(const pg of PIN_GROUPS){
+  const pin = new THREE.Mesh(new THREE.BoxGeometry(1.6,1,1.6),
+    new THREE.MeshStandardMaterial({color:pg.c, emissive:pg.c, emissiveIntensity:.5, metalness:.6}));
+  pin.position.set(25.8, 2.3, pg.z); scene.add(pin);
+  const lab = textSprite([pg.lbl],{fs:20,scale:.034,subColor:'#999'});
+  lab.position.set(31.5, 4.2+((pg.z%2)?0:1.1), pg.z); scene.add(lab);
+  const pts = [new THREE.Vector3(26.6,0.6,pg.z), new THREE.Vector3(41,0.6,pg.z)];
+  scene.add(new THREE.Line(new THREE.BufferGeometry().setFromPoints(pts), traceMat(pg.c)));
+}
+
+/* ---------- clock pulse rings ---------- */
+const rings = [];
+function ring(x,z,color,hz,r0){
+  const m = new THREE.Mesh(new THREE.RingGeometry(1,1.18,48),
+    new THREE.MeshBasicMaterial({color, transparent:true, opacity:.5, side:THREE.DoubleSide}));
+  m.rotation.x = -Math.PI/2; m.position.set(x,1.98,z);
+  scene.add(m); rings.push({m,hz,r0});
+}
+ring(-47,0,0x3b82f6,DOM.axi.hz,16); ring(-14,0,0x22c55e,DOM.ctrl.hz,19);
+ring(14.5,0,0xf97316,DOM.phy.hz,12); ring(7,-29,0xe11d48,DOM.fast.hz,7);
+ring(56.5,0,0xa855f7,DOM.dram.hz,16);
+
+/* ---------- review markers ---------- */
+const markers = [];
+for(const id in INFO){
+  const f = INFO[id].findings; if(!f || !blockMap[id]) continue;
+  const open = f.some(x=>x.st==='open');
+  const sp = textSprite([open?'⚠':'✓'],{fs:30,bg:true,bgc:open?'rgba(60,18,18,.92)':'rgba(10,40,28,.92)',
+    color:open?'#f87171':'#34d399',border:open?'#f87171':'#34d399',scale:.05});
+  const b = blockMap[id];
+  sp.position.set(b.x + 0, 1.85 + b.h + 4.6, b.z);
+  scene.add(sp); markers.push(sp);
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   3. PATHS & PARTICLE ENGINE
+   ════════════════════════════════════════════════════════════════════════ */
+const anchor = id => { const b = blockMap[id];
+  return new THREE.Vector3(b.x, 1.85 + b.h + .4, b.z); };
+
+function buildCurve(step){
+  const a = anchor(step.f), b = anchor(step.t);
+  if(step.via){                       // PCB route through pad/trace level
+    let z = CA_Z;
+    if(step.via==='ck') z = CK_Z;
+    if(step.via.startsWith('lane')) z = LANE_Z(parseInt(step.via.slice(4))||3);
+    if(step.via==='dq') z = LANE_Z(3);
+    const p1 = a.clone(), p4 = b.clone();
+    const pin = new THREE.Vector3(26.6, 1.2, z), far = new THREE.Vector3(41, 1.2, z);
+    const fromDram = a.x > 30, toDram = b.x > 30;
+    let pts;
+    if(toDram)        pts = [p1, pin, far, p4];   // die → across PCB → DRAM
+    else if(fromDram) pts = [p1, far, pin, p4];   // DRAM → back across PCB
+    else              pts = [p1, pin, p4];        // hop touching the pad ring only
+    return new THREE.CatmullRomCurve3(pts);
+  }
+  const mid = a.clone().lerp(b,.5);
+  mid.y += Math.min(14, a.distanceTo(b)*.32) + 2.5;
+  return new THREE.CatmullRomCurve3([a, mid, b]);
+}
+/* parallel DQ lane curves for burst fx */
+function laneCurves(step){
+  const arr = [];
+  const a = anchor(step.f), b = anchor(step.t);
+  for(let i=0;i<8;i++){
+    const z = LANE_Z(i);
+    const p2 = new THREE.Vector3(26.6,1.2,z), p3 = new THREE.Vector3(41,1.2,z);
+    const pts = a.x < b.x ? [a.clone(),p2,p3,b.clone()] : [a.clone(),p3,p2,b.clone()];
+    arr.push(new THREE.CatmullRomCurve3(pts));
+  }
+  return arr;
+}
+
+/* particle + trail */
+const PARTICLE_N = 26;
+function makeRunner(color){
+  const g = new THREE.Group();
+  const head = new THREE.Mesh(new THREE.SphereGeometry(.85,18,18),
+    new THREE.MeshStandardMaterial({color:0xffffff, emissive:color, emissiveIntensity:2.4}));
+  const glow = new THREE.Sprite(new THREE.SpriteMaterial({
+    map: glowTexture(color), transparent:true, opacity:.85, depthWrite:false, blending:THREE.AdditiveBlending}));
+  glow.scale.set(7,7,1);
+  g.add(head, glow);
+  const trail = [];
+  for(let i=0;i<PARTICLE_N;i++){
+    const t = new THREE.Mesh(new THREE.SphereGeometry(.42*(1-i/PARTICLE_N)+.12,8,8),
+      new THREE.MeshBasicMaterial({color, transparent:true, opacity:.5*(1-i/PARTICLE_N)}));
+    t.visible = false; scene.add(t); trail.push(t);
+  }
+  scene.add(g); g.visible = false;
+  return {g, head, glow, trail, hist:[]};
+}
+function glowTexture(color){
+  const cv = document.createElement('canvas'); cv.width = cv.height = 64;
+  const x = cv.getContext('2d');
+  const grd = x.createRadialGradient(32,32,2,32,32,30);
+  const c = '#'+color.toString(16).padStart(6,'0');
+  grd.addColorStop(0,c); grd.addColorStop(.4,c+'88'); grd.addColorStop(1,'transparent');
+  x.fillStyle = grd; x.fillRect(0,0,64,64);
+  return new THREE.CanvasTexture(cv);
+}
+const runner = makeRunner(0x4da3ff);
+const dqRunners = []; for(let i=0;i<8;i++) dqRunners.push(makeRunner(0x22d3ee));
+
+/* visited path lines */
+let pathLines = [];
+function drawPathLine(curve, color){
+  const geo = new THREE.BufferGeometry().setFromPoints(curve.getPoints(48));
+  const ln = new THREE.Line(geo, new THREE.LineBasicMaterial({color, transparent:true, opacity:.34}));
+  scene.add(ln); pathLines.push(ln); return ln;
+}
+function clearPathLines(){ for(const l of pathLines){scene.remove(l); l.geometry.dispose();} pathLines = []; }
+
+
+/* ─── Multilingual narration (label, one-line description) per step ─── */
+const I18N = {
+hi:{
+write:[
+["AW — लिखने का पता","CPU लिखने का पता भेजता है; awvalid और awready एक साथ high होने पर handshake पूरा"],
+["पता डिकोड (BRC)","32-bit पता bank, row और column में बाँटा जाता है"],
+["W — 8 data beats","आठ 64-bit data beats write FIFO में जाते हैं; आख़िरी beat पर wlast"],
+["Request ctrl_clk में","Request CDC पार कर 16-गहरी write queue में जुड़ती है; age गिनती शुरू"],
+["Data CDC → ECC","Data 400 MHz domain में आता है; 64 bit पर 8 parity bits जुड़ते हैं"],
+["FR-FCFS स्कैन","खुली row से मेल खाती requests आगे बढ़ाई जाती हैं"],
+["प्राथमिकता निर्णय","Priority = base + qos + उम्र + page-hit बोनस; write जीतता है"],
+["Bank स्थिति जाँच","Bank 2 खाली है — पूरा ACT क्रम चाहिए; tFAW window ठीक"],
+["Page policy","ADAPTIVE नीति: row खुली रखो, auto-precharge नहीं (A10=0)"],
+["ACTIVATE packet","Command generator ACT जारी करता है; timing controller tRP/tRC जाँचता है"],
+["JEDEC encoding","ACT = RAS#0 CAS#1 WE#1; row address A[14:0] पर"],
+["ACT pins पर","Command/address समूह CK के rising edge पर निकलता है"],
+["Row खुलती है — tRCD","Sense amplifiers row पकड़ते हैं; 11 cycles प्रतीक्षा अनिवार्य"],
+["WRITE command","tRCD पूरा; column address के साथ WRITE जारी"],
+["WR + ODT","WRITE pins पर; ODT ठीक 2 clock बाद on होता है (tODTon)"],
+["Burst जमा होना","आठ ECC beats मिलकर 512-bit burst बनते हैं; DM = ~WSTRB"],
+["512-bit PHY को","phy_wr_valid strobe; data ठीक CWL=8 clocks बाद pins पर होना चाहिए"],
+["1600 MHz serialization","OSERDES हर pin पर 8 bits को serial करता है; ODDR 90° पर"],
+["DQ burst + DQS","आठों lanes एक साथ: preamble → 4 DQS toggles → postamble"],
+["tWR = 12 प्रतीक्षा","Precharge से पहले write recovery; row खुली रहती है"],
+["B — जवाब","BRESP=OKAY मूल ID के साथ लौटता है (ARCH-002 नोट देखें)"]],
+read:[
+["AR — पढ़ने का पता","CPU पढ़ने का पता भेजता है; ID return matching के लिए"],
+["पता डिकोड","वही BRC mapping; यह पता bank 5 पर जाता है"],
+["Read queue में (CDC)","Request 16-गहरी read queue में; AXI ID rd_id FIFO में"],
+["FR-FCFS: page hit!","यह request खुली row से मेल खाती है — आगे promote"],
+["Grant: READ जीता","READ base 20000 + page-hit bonus writes से ऊपर"],
+["Page HIT — ACT छोड़ो","Row पहले से खुली; सीधे READ पर — ~22 cycles बचत"],
+["READ packet","CMD_READ column address के साथ; tCCD/tWTR जाँच पास"],
+["JEDEC encoding","READ = RAS#1 CAS#0 WE#1; A10=0"],
+["READ pins पर","Command अगले CK edge पर निकलता है"],
+["CL = 11 प्रतीक्षा","DRAM column चुनता है; data ठीक 11 clocks बाद आएगा"],
+["DRAM data भेजता है","अब DRAM bus चलाता है: DQS, DQ के edge-aligned"],
+["DQS-gated capture","Calibrated gate खुलता है; IDDR rise/fall पकड़ता है; gearbox जोड़ता है"],
+["512-bit तैयार","आठों lanes का data 512-bit bus पर जुड़ता है"],
+["ECC जाँच","Syndrome हर 72-bit word जाँचता है; single-bit चुपचाप ठीक"],
+["Beats + CDC वापसी","Burst 8 beats में बँटकर axi_aclk में लौटता है"],
+["ID मिलान","Transaction tracker सही AXI ID जोड़ता है"],
+["R — data वापसी","आठ beats R channel पर; rlast अंतिम beat पर"]],
+refresh:[
+["tREFI पूरा — refresh due","7.8 µs counter शून्य; request refresh queue में"],
+["Refresh सबसे ऊपर","REFRESH base 50000 — सबसे ऊँची प्राथमिकता"],
+["Pipeline रोकें","चालू bursts पूरे; नए commands रुकते हैं"],
+["PRECHARGE ALL","A10=1 से सभी खुली rows बंद"],
+["PREA pins पर","सभी banks एक साथ precharge"],
+["REF command","DRAM का अंदरूनी counter rows चुनता है"],
+["सभी 8 banks refresh — tRFC","Bus 208 cycles (520 ns) के लिए जमा"],
+["Counter फिर चालू","total_refreshes++; हर 8192 पर ZQCS भी"]],
+init:[
+["RESET# low 200 µs","JEDEC: power स्थिर होने तक RESET# नीचे, CKE नीचे"],
+["CKE और 500 µs नीचे","RESET# छूटा; CKE अभी भी नीचे रहना ज़रूरी"],
+["CKE high + tXPR","Clock-enable ऊपर; पहली command अब वैध"],
+["MRS → MR2","CWL=8 और RTT_WR सेट; क्रम 2→3→1→0 अनिवार्य"],
+["MR2 DRAM में latch","BA=2; address bus पर register की value"],
+["MRS → MR3","MPR नियंत्रण — बाद में read-leveling इस्तेमाल करेगा"],
+["MRS → MR1","DLL enable, drive 40 Ω, RTT_NOM 60 Ω"],
+["MRS → MR0","CL=11, WR=12, DLL reset=1; फिर tMOD=12"],
+["ZQCL — 512 cycles","Output impedance बाहरी 240 Ω से calibrate"],
+["DLL lock — tDLLK 512","दोनों DLL lock; flag 2FF sync से पार होता है"],
+["init_complete","cmd_ready खुलता है; आगे calibration चलेगा"]],
+cal:[
+["Quadrature phases","1600 MHz चार 400 MHz phases में बँटता है (625 ps अंतर)"],
+["WL प्रवेश — MR1 A7=1","DRAM हर DQS pulse पर CK sample करके DQ पर जवाब देगा"],
+["DQS pulse: 256 taps","हर delay tap पर pulse; 0→1 edge की खोज"],
+["DQ feedback — edge मिला","Tap 117 पर DQS, CK से aligned (FIX-PHY-004)"],
+["RL — MPR mode on","MR3 A2=1: हर READ अब 0x55 pattern लौटाता है"],
+["Eye sweep — 256 taps","हर tap पर pattern मिलान; eye map बनता है"],
+["Eye किनारे → केंद्र","88…152 → चौड़ाई 64 taps ≥ 30; gate tap 120 पर lock"],
+["सभी 8 lanes calibrated","lane_status ✓; PHY अब 1600 MT/s पर भरोसेमंद"]]
+},
+te:{
+write:[
+["AW — వ్రాత చిరునామా","CPU వ్రాత చిరునామా పంపుతుంది; awvalid, awready కలిసి high అయితే handshake పూర్తి"],
+["చిరునామా డికోడ్ (BRC)","32-bit చిరునామా bank, row, column గా విభజించబడుతుంది"],
+["W — 8 data beats","ఎనిమిది 64-bit beats write FIFO లోకి; చివరి beat పై wlast"],
+["Request ctrl_clk లోకి","Request CDC దాటి 16-లోతు write queue లో చేరుతుంది; age లెక్క మొదలు"],
+["Data CDC → ECC","Data 400 MHz domain కు; 64 bits కు 8 parity bits జతవుతాయి"],
+["FR-FCFS స్కాన్","తెరిచిన row కు సరిపోయే requests ముందుకు జరుపబడతాయి"],
+["ప్రాధాన్యత నిర్ణయం","Priority = base + qos + వయసు + page-hit బోనస్; write గెలుస్తుంది"],
+["Bank స్థితి పరిశీలన","Bank 2 ఖాళీ — పూర్తి ACT క్రమం అవసరం; tFAW window సరే"],
+["Page policy","ADAPTIVE విధానం: row తెరిచి ఉంచు, auto-precharge వద్దు (A10=0)"],
+["ACTIVATE packet","Command generator ACT జారీ చేస్తుంది; timing controller tRP/tRC చూస్తుంది"],
+["JEDEC encoding","ACT = RAS#0 CAS#1 WE#1; row address A[14:0] పై"],
+["ACT pins మీదకు","Command/address సమూహం CK rising edge పై వెళ్తుంది"],
+["Row తెరుచుకుంటుంది — tRCD","Sense amplifiers row ను పట్టుకుంటాయి; 11 cycles వేచి ఉండాలి"],
+["WRITE command","tRCD పూర్తయింది; column address తో WRITE జారీ"],
+["WR + ODT","WRITE pins పై; ODT సరిగ్గా 2 clocks తర్వాత on (tODTon)"],
+["Burst కూడిక","ఎనిమిది ECC beats కలిసి 512-bit burst; DM = ~WSTRB"],
+["512-bit PHY కి","phy_wr_valid strobe; data ఖచ్చితంగా CWL=8 clocks తర్వాత pins పై"],
+["1600 MHz serialization","ప్రతి pin పై OSERDES 8 bits ను serial చేస్తుంది; ODDR 90° పై"],
+["DQ burst + DQS","ఎనిమిది lanes ఒకేసారి: preamble → 4 DQS toggles → postamble"],
+["tWR = 12 నిరీక్షణ","Precharge ముందు write recovery; row తెరిచే ఉంటుంది"],
+["B — స్పందన","BRESP=OKAY అసలు ID తో తిరిగి వస్తుంది (ARCH-002 గమనిక)"]],
+read:[
+["AR — చదువు చిరునామా","CPU చదువు చిరునామా పంపుతుంది; ID return matching కోసం"],
+["చిరునామా డికోడ్","అదే BRC mapping; ఈ చిరునామా bank 5 కు"],
+["Read queue లోకి (CDC)","Request 16-లోతు read queue లో; AXI ID rd_id FIFO లో"],
+["FR-FCFS: page hit!","ఈ request తెరిచిన row కు సరిపోతుంది — ముందుకు promote"],
+["Grant: READ గెలిచింది","READ base 20000 + page-hit బోనస్ writes కంటే పైన"],
+["Page HIT — ACT అవసరం లేదు","Row ముందే తెరిచి ఉంది; నేరుగా READ — ~22 cycles ఆదా"],
+["READ packet","CMD_READ column address తో; tCCD/tWTR తనిఖీలు పాస్"],
+["JEDEC encoding","READ = RAS#1 CAS#0 WE#1; A10=0"],
+["READ pins మీదకు","Command తదుపరి CK edge పై వెళ్తుంది"],
+["CL = 11 నిరీక్షణ","DRAM column ఎంచుకుంటుంది; data ఖచ్చితంగా 11 clocks తర్వాత"],
+["DRAM data పంపుతుంది","ఇప్పుడు DRAM bus నడుపుతుంది: DQS, DQ తో edge-aligned"],
+["DQS-gated capture","Calibrated gate తెరుచుకుంటుంది; IDDR rise/fall పట్టుకుంటుంది"],
+["512-bit సిద్ధం","ఎనిమిది lanes data 512-bit bus గా కూడుతుంది"],
+["ECC తనిఖీ","ప్రతి 72-bit word కు syndrome; single-bit నిశ్శబ్దంగా సరిచేయబడుతుంది"],
+["Beats + CDC తిరుగు","Burst 8 beats గా విడిపోయి axi_aclk కు తిరిగి వస్తుంది"],
+["ID సరిపోలిక","Transaction tracker సరైన AXI ID జత చేస్తుంది"],
+["R — data తిరుగు","ఎనిమిది beats R channel పై; చివరి beat పై rlast"]],
+refresh:[
+["tREFI ముగిసింది","7.8 µs counter సున్నా; request refresh queue లోకి"],
+["Refresh అన్నిటికంటే పైన","REFRESH base 50000 — అత్యధిక ప్రాధాన్యత"],
+["Pipeline ఆపు","నడుస్తున్న bursts పూర్తి; కొత్త commands ఆగుతాయి"],
+["PRECHARGE ALL","A10=1 తో అన్ని తెరిచిన rows మూసివేత"],
+["PREA pins మీదకు","అన్ని banks ఒకేసారి precharge"],
+["REF command","DRAM అంతర్గత counter rows ఎంచుకుంటుంది"],
+["8 banks refresh — tRFC","Bus 208 cycles (520 ns) స్తంభన"],
+["Counter మళ్లీ ప్రారంభం","total_refreshes++; ప్రతి 8192 కి ZQCS కూడా"]],
+init:[
+["RESET# low 200 µs","JEDEC: power స్థిరపడే వరకు RESET# క్రింద, CKE క్రింద"],
+["CKE మరో 500 µs క్రింద","RESET# విడుదల; CKE ఇంకా క్రింద ఉండాలి"],
+["CKE high + tXPR","Clock-enable పైకి; మొదటి command ఇప్పుడు చెల్లుతుంది"],
+["MRS → MR2","CWL=8, RTT_WR సెట్; క్రమం 2→3→1→0 తప్పనిసరి"],
+["MR2 DRAM లో latch","BA=2; address bus పై register విలువ"],
+["MRS → MR3","MPR నియంత్రణ — తర్వాత read-leveling వాడుతుంది"],
+["MRS → MR1","DLL enable, drive 40 Ω, RTT_NOM 60 Ω"],
+["MRS → MR0","CL=11, WR=12, DLL reset=1; తర్వాత tMOD=12"],
+["ZQCL — 512 cycles","Output impedance బయటి 240 Ω తో calibrate"],
+["DLL lock — tDLLK 512","రెండు DLL లు lock; flag 2FF sync ద్వారా దాటుతుంది"],
+["init_complete","cmd_ready తెరుచుకుంటుంది; తర్వాత calibration"]],
+cal:[
+["Quadrature phases","1600 MHz నాలుగు 400 MHz phases గా (625 ps తేడా)"],
+["WL ప్రవేశం — MR1 A7=1","ప్రతి DQS pulse పై DRAM CK ను sample చేసి DQ పై జవాబిస్తుంది"],
+["DQS pulse: 256 taps","ప్రతి delay tap పై pulse; 0→1 edge అన్వేషణ"],
+["DQ feedback — edge దొరికింది","Tap 117 వద్ద DQS, CK తో aligned (FIX-PHY-004)"],
+["RL — MPR mode on","MR3 A2=1: ప్రతి READ ఇప్పుడు 0x55 pattern ఇస్తుంది"],
+["Eye sweep — 256 taps","ప్రతి tap పై pattern పోలిక; eye map తయారవుతుంది"],
+["Eye అంచులు → కేంద్రం","88…152 → వెడల్పు 64 taps ≥ 30; gate tap 120 వద్ద lock"],
+["8 lanes calibrated","lane_status ✓; PHY ఇప్పుడు 1600 MT/s వద్ద నమ్మదగినది"]]
+}
+};
+let LANG = 'en';
+function stepText(s, i){
+  if (LANG !== 'en' && I18N[LANG] && I18N[LANG][state.key] && I18N[LANG][state.key][i])
+    return I18N[LANG][state.key][i];   // [label, desc]
+  return null;
+}
+
+/* ─── movie mode: chain all scenarios like one film ─── */
+const PLAYLIST = ['init','cal','write','read','refresh'];
+let playAll = false, playIdx = 0;
+
+/* ════════════════════════════════════════════════════════════════════════
+   4. PLAYBACK ENGINE
+   ════════════════════════════════════════════════════════════════════════ */
+const $ = id => document.getElementById(id);
+const state = { scn:null, key:null, idx:0, t:0, playing:false, speed:1, cine:false };
+let curves = [], lanesCv = null, activeLine = null;
+
+const stepColor = s => s.fx&&s.fx.includes('dq') ? 0x22d3ee :
+  (DOM[blockMap[s.f].dom].c);
+
+function loadScenario(key){
+  state.key = key; state.scn = SCN[key]; state.idx = 0; state.t = 0; state.playing = true;
+  clearPathLines(); resetFx();
+  curves = state.scn.steps.map(buildCurve);
+  $('b-play').textContent = '⏸';
+  document.querySelectorAll('.scn-btn').forEach(b=>b.classList.toggle('active', b.dataset.k===key));
+  enterStep(0);
+}
+function totalDur(){ return state.scn ? state.scn.steps.reduce((a,s)=>a+s.dur,0) : 1; }
+function elapsed(){ if(!state.scn) return 0;
+  let e=0; for(let i=0;i<state.idx;i++) e+=state.scn.steps[i].dur;
+  return e + state.t*state.scn.steps[state.idx].dur; }
+
+function enterStep(i){
+  const s = state.scn.steps[i];
+  state.idx = i; state.t = 0;
+  /* narration */
+  const tr = stepText(s, i);
+  const partTag = playAll ? ('PART '+(playIdx+1)+'/'+PLAYLIST.length+' · ') : '';
+  $('n-step').textContent = partTag + state.scn.name + ' — STEP ' + (i+1) + ' / ' + state.scn.steps.length;
+  $('n-title').textContent = tr ? tr[0] : s.label;
+  $('n-desc').innerHTML = (tr ? '<b>'+tr[1]+'</b><br><span style="color:#7e93bd">'+s.desc+'</span>' : s.desc);
+  /* video-style subtitles */
+  $('sub1').textContent = (tr ? tr[0] : s.label);
+  $('sub2').textContent = (tr ? tr[1] : s.desc.replace(/<[^>]+>/g,'').split('. ')[0]+'.');
+  $('n-hop').innerHTML = '<b>' + blockMap[s.f].name.replace(/&amp;/g,'&') + '</b> → <b>' +
+    blockMap[s.t].name.replace(/&amp;/g,'&') + '</b>' + (s.via? ' <span style="color:#22d3ee">(across PCB)</span>':'');
+  $('sigs').innerHTML = s.sigs.map(x=>'<span class="sig">'+x+'</span>').join('');
+  $('tlabel').textContent = 'step '+(i+1)+' / '+state.scn.steps.length;
+  /* path */
+  if(activeLine){ activeLine.material.opacity = .14; }
+  activeLine = drawPathLine(curves[i], stepColor(s));
+  activeLine.material.opacity = .65;
+  /* runner color */
+  const col = stepColor(s);
+  runner.head.material.emissive.setHex(col);
+  runner.glow.material.map = glowTexture(col);
+  runner.g.visible = true;
+  /* lane burst */
+  lanesCv = null;
+  if(s.fx && s.fx.includes('dq')){
+    lanesCv = laneCurves(s);
+    for(const c of lanesCv) drawPathLine(c, 0x22d3ee).material.opacity = .4;
+  }
+  applyFx(s);
+}
+function stepDone(){
+  if(state.idx < state.scn.steps.length-1) enterStep(state.idx+1);
+  else if(playAll && playIdx < PLAYLIST.length-1){
+    playIdx++;
+    setTimeout(()=>{ if(playAll) loadScenario(PLAYLIST[playIdx]); }, 600);
+    state.playing = false;
+  }
+  else { state.playing = false; $('b-play').textContent='▶';
+    if(playAll){ playAll=false; $('playall').classList.remove('on');
+      $('n-step').textContent = '🎬 FILM COMPLETE — all 5 scenarios';
+      $('sub1').textContent='THE END'; $('sub2').textContent='Replay with 🎬 PLAY ALL, or explore scenarios individually.';
+    } else {
+      $('n-step').textContent = state.scn.name + ' — COMPLETE';
+    }
+    $('n-hop').innerHTML = '<b>Done.</b> Replay with ⟲, scrub the timeline, or pick another scenario.'; }
+}
+
+/* fx */
+let flashTargets = [];
+function resetFx(){
+  for(const b of flashTargets) b.mat.emissiveIntensity = baseEmissive;
+  flashTargets = [];
+}
+function applyFx(s){
+  resetFx();
+  const fx = s.fx||'';
+  if(fx.includes('bank:')){ const id = fx.match(/bank:(\w+)/)[1];
+    if(blockMap[id]) flashTargets.push(blockMap[id]); }
+  if(fx.includes('banks')) for(let i=0;i<8;i++) flashTargets.push(blockMap['bank'+i]);
+  cdcFlash = fx.includes('cdc') ? 1 : 0;
+}
+let cdcFlash = 0;
+
+/* highlight from/to blocks */
+let hiBlocks = [];
+function highlight(s){
+  for(const b of hiBlocks){ b.mat.emissiveIntensity = baseEmissive; b.grp.scale.setScalar(1); }
+  hiBlocks = [blockMap[s.f], blockMap[s.t]];
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   5. UI WIRING
+   ════════════════════════════════════════════════════════════════════════ */
+const SCN_LABELS = {write:'✍ WRITE', read:'📖 READ', refresh:'♻ REFRESH', init:'⚡ INIT', cal:'🎯 CALIBRATION'};
+for(const k of ['init','cal','write','read','refresh']){
+  const b = document.createElement('button');
+  b.className = 'scn-btn'; b.dataset.k = k; b.textContent = SCN_LABELS[k];
+  b.onclick = () => { playAll = false; $('playall').classList.remove('on'); loadScenario(k); };
+  $('scenarios').appendChild(b);
+}
+$('playall').onclick = () => {
+  playAll = !playAll;
+  $('playall').classList.toggle('on', playAll);
+  if(playAll){
+    playIdx = 0;
+    $('cine').checked = true; state.cine = true; document.body.classList.add('film');
+    loadScenario(PLAYLIST[0]);
+  }
+};
+$('langsel').onchange = e => { LANG = e.target.value;
+  if(state.scn) enterStep(state.idx);   // re-render narration in new language
+};
+$('b-play').onclick = () => { if(!state.scn){ loadScenario('write'); return; }
+  state.playing = !state.playing; $('b-play').textContent = state.playing?'⏸':'▶'; };
+$('b-restart').onclick = () => state.scn && loadScenario(state.key);
+$('speed').oninput = e => { state.speed = e.target.value/100; $('spdval').textContent = state.speed.toFixed(1)+'×'; };
+$('cine').onchange = e => { state.cine = e.target.checked; document.body.classList.toggle('film', state.cine); };
+$('marks').onchange = e => markers.forEach(m=>m.visible = e.target.checked);
+
+let scrubbing = false;
+$('timeline').addEventListener('input', e => {
+  if(!state.scn) return;
+  scrubbing = true; state.playing = false; $('b-play').textContent='▶';
+  const target = (e.target.value/1000)*totalDur();
+  let acc = 0;
+  for(let i=0;i<state.scn.steps.length;i++){
+    const d = state.scn.steps[i].dur;
+    if(target <= acc+d || i===state.scn.steps.length-1){
+      if(i!==state.idx){ clearPathLines();
+        for(let j=0;j<i;j++) drawPathLine(curves[j], stepColor(state.scn.steps[j]));
+        enterStep(i); }
+      state.t = Math.min(1,(target-acc)/d); break;
+    } acc += d;
+  }
+  scrubbing = false;
+});
+
+/* click → info panel */
+const ray = new THREE.Raycaster(), mouse = new THREE.Vector2();
+let downAt = null;
+renderer.domElement.addEventListener('pointerdown', e=> downAt = [e.clientX,e.clientY]);
+renderer.domElement.addEventListener('pointerup', e=>{
+  if(!downAt || Math.hypot(e.clientX-downAt[0], e.clientY-downAt[1]) > 5) return;
+  mouse.set((e.clientX/innerWidth)*2-1, -(e.clientY/innerHeight)*2+1);
+  ray.setFromCamera(mouse, camera);
+  const hit = ray.intersectObjects(clickables)[0];
+  if(hit) showInfo(hit.object.userData.id);
+});
+function showInfo(id){
+  const b = blockMap[id], inf = INFO[id]||{};
+  $('i-dot').style.background = '#'+DOM[b.dom].c.toString(16).padStart(6,'0');
+  $('i-name').innerHTML = b.name;
+  $('i-file').textContent = inf.file||'';
+  let h = '';
+  if(inf.desc) h += '<h4>What it does</h4><p>'+inf.desc+'</p>';
+  h += '<h4>Clock domain</h4><p>'+DOM[b.dom].name+' — '+
+    ({axi:'200–300 MHz',ctrl:'400 MHz',phy:'400 MHz (0°/90°/180°/270°)',fast:'1600 MHz',dram:'800 MT/s source-synchronous'})[b.dom]+'</p>';
+  if(inf.params) h += '<h4>Key parameters</h4><table>'+inf.params.map(p=>'<tr><td>'+p[0]+'</td><td>'+p[1]+'</td></tr>').join('')+'</table>';
+  if(inf.ports) h += '<h4>Key ports / signals</h4><table>'+inf.ports.map(p=>'<tr><td>'+p[0]+'</td><td>'+p[1]+'</td></tr>').join('')+'</table>';
+  if(inf.fsm) h += '<h4>FSM states</h4><div>'+inf.fsm.map(s=>'<span class="fsm">'+s+'</span>').join('')+'</div>';
+  if(inf.notes) h += '<h4>Notes</h4><ul>'+inf.notes.map(n=>'<li>'+n+'</li>').join('')+'</ul>';
+  if(inf.findings){ h += '<h4>Code-review findings</h4>'+inf.findings.map(f=>
+    '<div class="find '+f.sev+'"><span class="st '+f.st+'">'+f.st.toUpperCase()+'</span>'+
+    '<span class="tag">['+f.tag+']</span> '+f.txt+'</div>').join(''); }
+  $('i-body').innerHTML = h;
+  $('info').classList.add('open');
+}
+
+/* ════════════════════════════════════════════════════════════════════════
+   6. MAIN LOOP
+   ════════════════════════════════════════════════════════════════════════ */
+const clock = new THREE.Clock();
+let camLerp = new THREE.Vector3();
+
+function animate(){
+  requestAnimationFrame(animate);
+  const dt = Math.min(clock.getDelta(), .08);
+  const time = clock.elapsedTime;
+
+  /* clock-domain pulse rings */
+  for(const r of rings){
+    const ph = (time*r.hz)%1;
+    r.m.scale.setScalar(r.r0*(0.4+ph*0.9));
+    r.m.material.opacity = .42*(1-ph);
+  }
+  /* CDC wall shimmer */
+  const cw = .14 + (cdcFlash? .35*(0.5+0.5*Math.sin(time*12)) : .04*Math.sin(time*3));
+  cdcWall.material.opacity = cdcWall2.material.opacity = cw;
+
+  /* playback */
+  if(state.scn){
+    const s = state.scn.steps[state.idx];
+    if(state.playing && !scrubbing){
+      state.t += dt*state.speed/s.dur;
+      if(state.t >= 1){ state.t = 0; if(state.idx===state.scn.steps.length-1){state.t=1;} stepDone(); }
+    }
+    const cur = state.scn.steps[state.idx];
+    const cv = curves[state.idx];
+    const p = cv.getPointAt(Math.min(.999, Math.max(0,state.t)));
+    runner.g.position.copy(p);
+    runner.hist.unshift(p.clone()); if(runner.hist.length>PARTICLE_N) runner.hist.pop();
+    runner.trail.forEach((t,i)=>{ const hp = runner.hist[Math.min(i, runner.hist.length-1)];
+      if(hp){ t.visible = true; t.position.copy(hp);} });
+    /* multi-beat shimmer */
+    if(cur.fx && cur.fx.includes('multi')){
+      runner.glow.scale.setScalar(6+2.4*Math.sin(time*18));
+    } else runner.glow.scale.setScalar(7);
+    /* DQ lane burst runners */
+    if(lanesCv){ dqRunners.forEach((r,i)=>{
+        r.g.visible = true;
+        const tt = Math.min(.999, Math.max(0, state.t - i*0.012));
+        r.g.position.copy(lanesCv[i].getPointAt(tt));
+      });
+    } else dqRunners.forEach(r=>r.g.visible=false);
+    /* block highlight pulse */
+    highlight(cur);
+    for(const b of hiBlocks){ b.mat.emissiveIntensity = baseEmissive + .55*(0.5+0.5*Math.sin(time*7)); }
+    for(const b of flashTargets){ b.mat.emissiveIntensity = baseEmissive + .9*(0.5+0.5*Math.sin(time*10)); }
+    /* timeline readout */
+    if(!scrubbing) $('timeline').value = Math.round(1000*elapsed()/totalDur());
+    /* cinematic camera */
+    if(state.cine){
+      const tgt = p.clone();
+      controls.target.lerp(tgt, .045);
+      const a = anchor(cur.f), b = anchor(cur.t);
+      const dir = b.clone().sub(a).normalize();
+      const side = new THREE.Vector3(-dir.z,0,dir.x);
+      const camPos = p.clone().add(side.multiplyScalar(26)).add(new THREE.Vector3(0,17,0));
+      camLerp.copy(camera.position).lerp(camPos,.03);
+      camera.position.copy(camLerp);
+    }
+  }
+  controls.update();
+  renderer.render(scene, camera);
+}
+animate();
+window.__APP_OK = true;
+
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth/innerHeight; camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+/* default info = overview */
+/* auto-start so the scene is alive without any click */
+setTimeout(()=>{ if(!state.scn) loadScenario('write'); }, 900);
+
+setTimeout(()=>{ if(!$('info').classList.contains('open')){
+  $('i-dot').style.background = '#4da3ff';
+  $('i-name').textContent = 'DDR3 Controller — Top Level';
+  $('i-file').textContent = '02_top/ddr3_controller_top_enhanced.sv (2192 lines)';
+  $('i-body').innerHTML =
+   '<h4>Architecture</h4><p>AXI4 slave → user interface (async FIFOs + address decode) → command queues (16 RD / 16 WR / 4 REF) → FR-FCFS + priority arbitration → 27-state command generator → JEDEC timing controller → command encoder → PHY (OSERDES/ISERDES, DQS, DLL quadrature) → 98 DDR3 pins → 8-bank SDRAM.</p>'+
+   '<h4>Clock domains</h4><table><tr><td>axi_aclk</td><td>200–300 MHz — AXI port</td></tr><tr><td>ctrl_clk</td><td>400 MHz — queues, scheduler, timing</td></tr><tr><td>phy_clk</td><td>400 MHz reference</td></tr><tr><td>clk_fast</td><td>1600 MHz — serializers, quadrature gen</td></tr></table>'+
+   '<h4>How to use</h4><ul><li>Pick a scenario (top) — INIT → CALIBRATION → WRITE → READ → REFRESH is the natural order.</li><li>Watch the glowing packet travel block-to-block; the left panel narrates every hop with the exact RTL signals.</li><li>Click any block for ports, parameters, FSM states and review findings.</li><li>⚠ = open review finding, ✓ = fixed. Toggle with “review marks”.</li><li>Enable 🎬 film cam for an automatic cinematic chase camera.</li></ul>';
+  $('info').classList.add('open');
+}}, 600);
+</script>
+</body>
+</html>
